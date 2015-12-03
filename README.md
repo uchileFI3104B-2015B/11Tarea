@@ -19,10 +19,9 @@ El espectro que debe modelar se encuentra en el archivo `espectro.dat`, en
 unidades de flujo por unidad de frecuencia f<sub>&nu;</sub> [erg s<sup>-1</sup>
 Hz<sup>-1</sup> cm<sup>-2</sup>] vs. longitud de onda en [&#x212B;].
 
-La línea que debe modelar, al igual que en la tarea anterior, no es una
-gausiana, sino que algo más complicado. Ud. nuevamente seguirá dos
-procedimientos para modelar el espectro y luego comparará los resultados de los
-dos modelos.
+La línea que debe modelar, al igual que en la tarea anterior, no es una gausiana
+sino que algo más complicado. Ud. nuevamente seguirá dos procedimientos para
+modelar el espectro y luego comparará los resultados de los dos modelos.
 
 1. Línea gaussiana simple. Note que como la longitud de onda central es
    conocida, el modelo tiene sólo dos parámetros libres.
@@ -32,7 +31,6 @@ dos modelos.
    gaussianas. Un modelo como ese está representado en la siguiente figura.
 
    <img src="spectrum.png" height="400px"/>
-   
 
    Las líneas punteadas son las dos gausianas simples cuya suma corresponde a la
    línea azul contínua. La curva roja representa el espectro. Como se aprecia,
@@ -44,13 +42,19 @@ dos modelos.
 Para cada uno de los dos modelos estime, usando métodos Bayesianos, los
 parámetros (por ejemplo la esperanza E[&theta;], de los parámetros), y sus
 intervalos de 68% de confianza, que en estadística Bayesiana se llaman
-intervalos de credibilidad. 
+intervalos de credibilidad.
 
-> NOTA: Ud. deberá definir probabilidades a priori para cada uno de los
+> NOTA 1: Ud. deberá definir probabilidades a priori para cada uno de los
 > parámetros de los modelos. Sea explícito en su informe sobre cuales fuernos
 > sus elecciones y su justificación.
+>
+> NOTA 2: para la verosimilitud, necesitará los errores asociados a cada punto
+> (pixel). Esta vez asumiremos que los errores son gaussianos y constantes a lo
+> largo del espectro. Dado que el contínuo es conocido, Ud. puede estimar el
+> *ruido* mirando la variación de los puntos con respecto al valor del contínuo
+> conocido. Explicite en su informe el valor que determinó.
 
-# P2. 
+# P2.
 
 Como se mencionó antes, el modelo de dos gaussianas debe producir un mejor fit
 de los datos, pero a cambio de tener el doble de parámetros libres que el modelo
