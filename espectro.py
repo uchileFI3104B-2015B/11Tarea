@@ -77,6 +77,19 @@ def fitear_implementado(func, x, y, seed=False):
         return popt
 
 
+def desviacion(y, imin, imax):
+    '''
+    Corta el arreglo x en los indices imin y imax, luego concatena los dos
+    arreglos resultantes y calcula el error std. Para realizar esto se
+    utilizan listas
+    '''
+    a = list(y[:imin])
+    b = list(y[imax:])
+    a.extend(b)
+    z = np.array(a)
+    return np.std(z)
+
+
 def resultados_gauss(x, y, seeds=False):
     '''
     Imprime y grafica los resultados del ajuste doble gaussiano a los
@@ -129,8 +142,16 @@ def resultados_gauss(x, y, seeds=False):
 # Leer datos
 x, y = llamar_archivo('espectro.dat')
 
+# Puntos escogidos como inicio de la linea de absorcion
+p.plot(x[50], y[50], '*')
+p.plot(x[76], y[76], '*')
+p.plot(x, y, color='turquoise', drawstyle='steps-post', lw=2., alpha=0.8)
+p.axis([6503, 6623, 9e-17, 1.01e-16])
+p.show()
+
 # Semillas para el ajuste
 seeds = [1e-17, 7., 1e-17, 7.]
 
 # Resultados
 resultados_gauss(x, y, seeds)
+print 'Desviacion STD fuera de la linea de absorcion = ', desviacion(y, 50, 76)
