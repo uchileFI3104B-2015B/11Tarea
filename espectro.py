@@ -27,6 +27,35 @@ import os
 #############################################################################
 
 
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+#############################################################################
+#                                TAREA 11                                   #
+#############################################################################
+
+'''
+Universidad de Chile
+Facultad de Ciencias Fisicas y Matematicas
+Departamento de Fisica
+FI3104 Metodos Numericos para la Ciencia y la Ingenieria
+Semestre Primavera 2015
+
+Nicolas Troncoso Kurtovic
+'''
+
+from __future__ import division
+import matplotlib.pyplot as p
+import numpy as np
+import scipy.stats
+from scipy.optimize import curve_fit
+import os
+
+#############################################################################
+#                                                                           #
+#############################################################################
+
+
 def llamar_archivo(nombre):
     '''
     Llama un archivo 'nombre.dat' de dos columnas, este archivo esta
@@ -47,6 +76,77 @@ def doblegauss(x, A, sigma1, B, sigma2):
     g1 = (A * scipy.stats.norm(loc=6563, scale=sigma1).pdf(x))
     g2 = (B * scipy.stats.norm(loc=6563, scale=sigma2).pdf(x))
     return 1e-16 - g1 - g2
+
+
+def Gauss2D(x, y, A, mu, sigma_pars):
+    '''
+    Version mas general de doblegauss, considera la covarianza entre ambas
+    gaussianas, pero ambas tienen la misma amplitud. Es una gaussiana en 2D.
+    '''
+    mu_x, mu_y = mu
+    sigma_x, sigma_y, rho = sigma_pars
+    B = A / (2. * np.pi * sigma_x * sigma_y * np.sqrt(1-rho**2))
+    C = -1. / (2. * (1. - rho**2))
+    D = (x - mu_x)**2 / sigma_x**2
+    E = (y - mu_y)**2 / sigma_y**2
+    F = 2. * rho * (x - mu_x) * (y - mu_y) / (sigma_x * sigma_y)
+    return B * np.exp(C * (D + E - F))
+
+
+def prior(beta, params, dim):
+    '''
+    Probabilidad de obtener beta a partir de los parametros params. dim
+    indica el numero de dimensiones, que puede ser 2D o 4D.
+    '''
+    if dim == 4:
+        beta0, beta1, beta2, beta3 = beta
+        mu0, sigma0, mu1, sigma1, mu2, sigma2, mu3, sigma3 = params
+        S0 = (beta0 - mu0)**2 / sigma0**2
+        S1 = (beta1 - mu1)**2 / sigma1**2
+        S2 = (beta2 - mu2)**2 / sigma2**2
+        S3 = (beta3 - mu3)**2 / sigma3**2
+        S = -1. / 2 * (S0 + S1 + S2 + S3)
+        msigmas = sigma0 * sigma1 * sigma2 * sigma3
+        P = np.exp(S) / (4. * np.pi**2 * msigmas)
+    if dim == 2:
+        beta0, beta1 = beta
+        mu0, sigma0, mu1, sigma1 = params
+        S0 = (beta0 - mu0)**2 / sigma0**2
+        S1 = (beta1 - mu1)**2 / sigma1**2
+        S = -1. / 2 * (S0 + S1)
+        msigmas = sigma0 * sigma1
+        P = np.exp(S) / (2 * np.pi * msigmas)
+    else:
+        return False
+    return P
+
+
+def fill_prior(b_grid, params, dim):
+    '''
+    Crea una malla de Probabilidades para las combinaciones de variables.
+    Los input son las mallas de parametros, mas los parametros que modelan
+    la gaussiana de distribucion de los parametros buscados.
+    '''
+    if dim == 2:
+        b0_grid, b1_grid = b_grid
+        output = np.zeros(b0_grid.shape)
+        ni, nj = b0_grid.shape
+        for i in range(ni):
+            for j in range(nj):
+                coord = [b0_grid[i, j], b1_grid[i, j]]
+                output[i, j] = prior(coord, params, dim)
+    if dim == 4:
+        b0_grid, b1_grid, b2_grid, b3_grid = b_grid
+        output = np.zeros(b0_grid.shape)
+        ni, nj, nk, nl = b0_grid.shape
+        for i in range(ni):
+            for j in range(nj):
+                for k in range(nk):
+                    for l in range(nl):
+                        coord = [b0_grid[i, j], b1_grid[i, j],
+                                 b2_grid[i, j], b3_grid[i, j]]
+                        output[i, j, k, l] = prior(coord, params, dim)
+    return output
 
 
 def gauss(x, A, sigma1):
@@ -155,3 +255,6 @@ seeds = [1e-17, 7., 1e-17, 7.]
 # Resultados
 resultados_gauss(x, y, seeds)
 print 'Desviacion STD fuera de la linea de absorcion = ', desviacion(y, 50, 76)
+
+
+
