@@ -93,6 +93,14 @@ def Gauss2D(x, y, A, mu, sigma_pars):
     return B * np.exp(C * (D + E - F))
 
 
+def gauss(x, A, sigma):
+    '''
+    Retorna el valor de la suma de dos gaussianas evaluadas en x.
+    '''
+    g = (A * scipy.stats.norm(loc=6563, scale=sigma).pdf(x))
+    return 1e-16 - g
+
+
 def prior(beta, params, dim):
     '''
     Probabilidad de obtener beta a partir de los parametros params. dim
@@ -149,12 +157,57 @@ def fill_prior(b_grid, params, dim):
     return output
 
 
-def gauss(x, A, sigma1):
+def likelihood(beta, x, y, error, dim):
     '''
-    Retorna el valor de la suma de dos gaussianas evaluadas en x.
+    Calcula la verosimilitud segun los parametros ingresados en beta,
+    utilizando las mediciones 'x, y' que poseen un error std 'error'. Debe
+    especificarse el numero de dimensiones.
     '''
-    g = (A * scipy.stats.norm(loc=6563, scale=sigma1).pdf(x))
-    return 1e-16 - g
+    if dim == 2:
+        A, sigma = beta
+        try:
+            N = len(x)
+        except:
+            N = 1
+        S = np.sum((y - gauss(x, A, sigma))**2)
+        L = (2 * np.pi * error**2)**(-N / 2.) * np.exp(-S / (2 * error**2))
+    if dim == 4:
+        A, sigma1, B, sigma2 = beta
+        try:
+            N = len(x)
+        except:
+            N = 1
+        S = np.sum((y - doblegauss(x, A, sigma1, B, sigma2))**2)
+        L = (2 * np.pi * error**2)**(-N / 2.) * np.exp(-S / (2 * error**2))
+    return L
+
+
+def fill_likelihood(beta, x, y, error, dim):
+    '''
+    Crea una malla de Verosimilitudes para las combinaciones de variables.
+    Los input son las mallas de parametros, mas los parametros que modelan
+    la gaussiana de distribucion de los parametros buscados.
+    '''
+    if dim == 2:
+        b0_grid, b1_grid = beta
+        ni, nj = b0_grid.shape
+        output = np.zeros(ni, nj)
+        for i in range(ni):
+            for j in range(nj):
+                coor = [b0_grid[i,j], b1_grid[i,j]]
+                output[i, j] = likelihood(coor, x, y, error, dim)
+    if dim == 4:
+        b0_grid, b1_grid, b2_grid, b3_grid = beta
+        ni, nj, nk, nl = b0_grid.shape
+        output = np.zeros(ni, nj, nk, nl)
+        for i in range(ni):
+            for j in range(nj):
+                for k in range(nk):
+                    for l in range(nl):
+                        coord = [b0_grid[i, j], b1_grid[i, j],
+                                 b2_grid[i, j], b3_grid[i, j]]
+                        output[i, j, k, l] = likelihood(coor, x, y, error, dim)
+    return output
 
 
 def chi(func, x, y, parametros):
@@ -255,6 +308,3 @@ seeds = [1e-17, 7., 1e-17, 7.]
 # Resultados
 resultados_gauss(x, y, seeds)
 print 'Desviacion STD fuera de la linea de absorcion = ', desviacion(y, 50, 76)
-
-
-
