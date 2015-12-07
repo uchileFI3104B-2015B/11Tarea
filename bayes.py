@@ -51,7 +51,7 @@ def likelihood1(beta, data):
         N = len(x)
     except:
         N = 1
-    S = np.sum((y - 1 + beta0 * gaussian(x, 6563, beta1) )**2)
+    S = np.sum((y - lamb*100 + beta0 * gaussian(x, 6563, beta1) )**2)
     L = (2 * np.pi * noise**2)**(-N / 2.) * np.exp(-S / (2*noise**2))
     return L
 
@@ -62,8 +62,8 @@ def likelihood2(beta, data):
         N = len(x)
     except:
         N = 1
-    S = np.sum((y - 1 + beta0 * gaussian(x, 6563, beta1) +
-                beta1 * gaussian(x, 6563, beta4) )**2)
+    S = np.sum((y - lamb*100 + beta0 * gaussian(x, 6563, beta1) +
+                beta2 * gaussian(x, 6563, beta3) )**2)
     L = (2 * np.pi * noise**2)**(-N / 2.) * np.exp(-S / (2*noise**2))
     return L
 
@@ -72,7 +72,7 @@ def fill_likelihood1(beta0_grid, beta1_grid, data):
     ni, nj = beta0_grid.shape
     for i in range(ni):
         for j in range(nj):
-            output[i, j] = likelihood([beta0_grid[i,j], beta1_grid[i,j]], data)
+            output[i, j] = likelihood1([beta0_grid[i,j], beta1_grid[i,j]], data)
     return output
 
 def fill_likelihood2(beta0_grid, beta1_grid, beta2_grid, beta3_grid, data):
@@ -82,45 +82,94 @@ def fill_likelihood2(beta0_grid, beta1_grid, beta2_grid, beta3_grid, data):
         for j in range(nj):
             for k in range(nk):
                 for l in range(nl):
-                    output[i, j, k, l] = likelihood([beta0_grid[i, j, k, l],
-                                                     beta1_grid[i, j, k, l],
-                                                     beta2_grid[i, j, k, l],
-                                                     beta3_grid[i, j, k, l]],
+                    output[i, j, k, l] = likelihood2([beta0_grid[i, j, k, l],
+                                                      beta1_grid[i, j, k, l],
+                                                      beta2_grid[i, j, k, l],
+                                                      beta3_grid[i, j, k, l]],
                                                      data)
     return output
 
-
+# Lectura de datos
+lamb = 0.4
 wavelen = np.loadtxt("espectro.dat", usecols=(0,))
 frec = np.loadtxt("espectro.dat", usecols=(1,))
 data = np.zeros((2, len(wavelen)))
 data[0] = wavelen
-data[1] = (10**16)*frec
+data[1] = (lamb * 10**18)*frec
 
+# Determinacion de ruido
 s = 0
 n = 0
 for i in range(len(wavelen)):
     if data[0][i] <= 6530 or data[0][i]>= 6600:
-        s += (data[1][i] - 1)**2
+        s += (data[1][i] - 100 * lamb)**2
         n += 1
 noise = np.sqrt(s/(1.0*n))
 
-beta0_grid1, beta1_grid1 = np.mgrid[0.7:0.84:201j, 3.4:4.0:201j]
-beta_prior_pars1 = [1, 0.4, 5, 2]
-prior_grid1 = fill_prior1(beta0_grid, beta1_grid, beta_prior_pars)
-likelihood_grid1 = fill_likelihood1(beta0_grid, beta1_grid, [data[0], data[1]])
+# Modelo 1
+beta0_grid1, beta1_grid1 = np.mgrid[(70*lamb):(84*lamb):201j, 3.4:4.0:201j]
+beta_prior_pars1 = [80*lamb, 40*lamb, 3.6, 3]
+prior_grid1 = fill_prior1(beta0_grid1, beta1_grid1, beta_prior_pars1)
+likelihood_grid1 = fill_likelihood1(beta0_grid1, beta1_grid1,
+                                    [data[0], data[1]])
 post_grid1 = likelihood_grid1 * prior_grid1
-dx1 = 0.14 / 200
+dx1 = 14.0*lamb / 200
 dy1 = 0.6 / 200
-P_E1 = np.sum(post_grid) * dx * dy
-marg_Amp1 = np.sum(post_grid, axis=1) * dx / P_E
-marg_std1 = np.sum(post_grid, axis=0) * dy / P_E
+P_E1 = np.sum(post_grid1) * dx1 * dy1
+marg_Amp1 = np.sum(post_grid1, axis=1) * dy1 / P_E1
+marg_std1 = np.sum(post_grid1, axis=0) * dx1 / P_E1
+EAmp1 = np.sum(beta0_grid1[:, 0] * marg_Amp1) * dx1
+Estd1 = np.sum(beta1_grid1[0, :] * marg_std1) * dy1
+
+# Modelo 2
+l = lamb
+beta0_grid2, beta1_grid2, beta2_grid2, beta3_grid2 = np.mgrid[8:24:101j,
+                                                              1.0:4.0:101j,
+                                                              14:26:101j,
+                                                              5.5:11.5:101j]
+beta_prior_pars2 = [40*lamb, 20*lamb, 2.5, 1, 50*lamb, 25*lamb, 8.5, 3]
+prior_grid2 = fill_prior2(beta0_grid2, beta1_grid2, beta2_grid2,
+                          beta3_grid2, beta_prior_pars2)
+likelihood_grid2 = fill_likelihood2(beta0_grid2, beta1_grid2, beta2_grid2,
+                                    beta3_grid2, [data[0], data[1]])
+post_grid2 = likelihood_grid2 * prior_grid2
+dx2 = 16.0 / 100
+dy2 = 3.0 / 100
+dz2 = 8.0 / 100
+dw2 = 6.0 / 100
+P_E2 = np.sum(post_grid2) * dx2 * dy2 * dz2 * dw2
+marg_Amp21 = (np.sum(np.sum(np.sum(post_grid2, axis=1), axis=1), axis=1) *
+              dy2 * dz2 * dw2 / P_E2)
+marg_std21 = (np.sum(np.sum(np.sum(post_grid2, axis=0), axis=1), axis=1) *
+              dx2 * dz2 * dw2 / P_E2)
+marg_Amp22 = (np.sum(np.sum(np.sum(post_grid2, axis=0), axis=0), axis=1) *
+              dx2 * dy2 * dw2 / P_E2)
+marg_std22 = (np.sum(np.sum(np.sum(post_grid2, axis=0), axis=0), axis=0) *
+              dx2 * dy2 * dz2 / P_E2)
+EAmp21 = np.sum(beta0_grid2[:, 0, 0, 0] * marg_Amp21) * dx2
+Estd21 = np.sum(beta1_grid2[0, :, 0, 0] * marg_std21) * dy2
+EAmp22 = np.sum(beta2_grid2[0, 0, :, 0] * marg_Amp22) * dz2
+Estd22 = np.sum(beta3_grid2[0, 0, 0, :] * marg_std22) * dw2
+
+print "Factor bayesiano:", P_E1/P_E2
+
 plt.clf()
+# Plots modelo 1
 plt.figure(1)
-plt.pcolormesh(beta0_grid, beta1_grid, post_grid)
+plt.pcolormesh(beta0_grid1, beta1_grid1, post_grid1)
 plt.figure(2)
-plt.plot(beta0_grid[:, 0], marg_Amp)
+plt.plot(beta0_grid1[:, 0], marg_Amp1)
 plt.figure(3)
-plt.plot(beta1_grid[0, :], marg_std)
+plt.plot(beta1_grid1[0, :], marg_std1)
+# Plots modelo 2
+plt.figure(4)
+plt.plot(beta0_grid2[:, 0, 0, 0], marg_Amp21)
+plt.figure(5)
+plt.plot(beta1_grid2[0, :, 0, 0], marg_std21)
+plt.figure(6)
+plt.plot(beta2_grid2[0, 0, :, 0], marg_Amp22)
+plt.figure(7)
+plt.plot(beta3_grid2[0, 0, 0, :], marg_std22)
 plt.show()
 
-# pars optimos segun esto: 0.764, 3.712
+# opt params: 0.4, 2.5, 0.5, 8.5
