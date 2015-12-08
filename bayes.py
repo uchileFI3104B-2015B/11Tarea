@@ -68,6 +68,7 @@ def fill_prior2(par0_grid, par1_grid, par2_grid, par3_grid, prior_pars):
     out = np.zeros(par0_grid.shape)
     ni, nj, nk, nl = par0_grid.shape
     for i in range(ni):
+        print "prior 2", i
         for j in range(nj):
             for k in range(nk):
                 for l in range(nl):
@@ -134,6 +135,7 @@ def fill_likelihood2(beta0_grid, beta1_grid, beta2_grid, beta3_grid, data):
     output = np.zeros(beta0_grid.shape)
     ni, nj, nk, nl = beta0_grid.shape
     for i in range(ni):
+        print "likelihood2", i
         for j in range(nj):
             for k in range(nk):
                 for l in range(nl):
