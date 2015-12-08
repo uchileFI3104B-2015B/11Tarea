@@ -163,13 +163,13 @@ for i in range(len(wavelen)):
 noise = np.sqrt(s/(1.0*n))
 
 # Modelo 1
-beta0_grid1, beta1_grid1 = np.mgrid[(70*lamb):(84*lamb):201j, 3.4:4.0:201j]
+beta0_grid1, beta1_grid1 = np.mgrid[(70*lamb):(83*lamb):201j, 3.4:4.0:201j]
 beta_prior_pars1 = [80*lamb, 40*lamb, 3.6, 3]
 prior_grid1 = fill_prior1(beta0_grid1, beta1_grid1, beta_prior_pars1)
 likelihood_grid1 = fill_likelihood1(beta0_grid1, beta1_grid1,
                                     [data[0], data[1]])
 post_grid1 = likelihood_grid1 * prior_grid1
-dx1 = 14.0*lamb / 200
+dx1 = 13.0*lamb / 200
 dy1 = 0.6 / 200
 P_E1 = np.sum(post_grid1) * dx1 * dy1
 marg_Amp1 = np.sum(post_grid1, axis=1) * dy1 / P_E1
@@ -182,14 +182,14 @@ np.save('margstd1.npy', marg_std1)
 np.save('dmargstd1.npy', beta1_grid1[0, :])
 
 # Modelo 2
-ai21 = 20 * lamb
-af21 = 60 * lamb
+ai21 = 27 * lamb
+af21 = 55 * lamb
 ai22 = 35 * lamb
-af22 = 65 * lamb
+af22 = 62 * lamb
 beta0_grid2, beta1_grid2, beta2_grid2, beta3_grid2 = np.mgrid[ai21:af21:101j,
-                                                              1.0:4.0:101j,
+                                                              1.7:3.2:101j,
                                                               ai22:af22:101j,
-                                                              5.5:11.5:101j]
+                                                              6:11.5:101j]
 beta_prior_pars2 = [40*lamb, 20*lamb, 2.5, 1, 50*lamb, 25*lamb, 8.5, 3]
 prior_grid2 = fill_prior2(beta0_grid2, beta1_grid2, beta2_grid2,
                           beta3_grid2, beta_prior_pars2)
@@ -197,9 +197,9 @@ likelihood_grid2 = fill_likelihood2(beta0_grid2, beta1_grid2, beta2_grid2,
                                     beta3_grid2, [data[0], data[1]])
 post_grid2 = likelihood_grid2 * prior_grid2
 dx2 = (af21 - ai21) / 100
-dy2 = 3.0 / 100
+dy2 = 1.5 / 100
 dz2 = (af22 - ai22) / 100
-dw2 = 6.0 / 100
+dw2 = 5.5 / 100
 P_E2 = np.sum(post_grid2) * dx2 * dy2 * dz2 * dw2
 marg_Amp21 = (np.sum(np.sum(np.sum(post_grid2, axis=1), axis=1), axis=1) *
               dy2 * dz2 * dw2 / P_E2)

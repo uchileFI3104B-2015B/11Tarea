@@ -46,17 +46,42 @@ for i in range(len(margins)):
         else:
             s += dx * margins[i][left]
             left -= 1
-    cred_inter.append((doms[i][left], doms[i][right]))
+        if margins[i][right] > margins[i][left] and s < 0.68:
+            xl = doms[i][left]
+            while margins[i][right] > margins[i][left]:
+                s += dx * margins[i][right]
+                right += 1
+            xr = (doms[i][right-1] + (doms[i][right]-doms[i][right-1])*
+                  (margins[i][left]-margins[i][right-1]) /
+                  (margins[i][right]-margins[i][right-1]))
+        elif s < 0.68:
+            xr = doms[i][right]
+            while margins[i][left] >= margins[i][right]:
+                s += dx * margins[i][left]
+                left -= 1
+            xl = (doms[i][left] + (doms[i][left+1]-doms[i][left])*
+                  (margins[i][right]-margins[i][left]) /
+                  (margins[i][left+1]-margins[i][left]))
+    cred_inter.append((xl, xr))
+
+cred_inter[0] = (cred_inter[0][0]/scala, cred_inter[0][1]/scala)
+cred_inter[2] = (cred_inter[2][0]/scala, cred_inter[2][1]/scala)
+cred_inter[4] = (cred_inter[4][0]/scala, cred_inter[4][1]/scala)
 
 print "Factor bayesiano P(D|M1) / P(D|M2) =", bayes
-print "Amplitud modelo 1:", emargins[0]/scala,
-print "Inter. de cred.:", cred_inter[0]
-print "Ancho modelo 1:", emargins[1], "Inter. de cred.:", cred_inter[1]
-print "Amplitud 1 modelo 2:", emargins[2]/scala,
-print "Inter. de cred.:", cred_inter[2]
-print "Ancho 1 modelo 2:", emargins[3], "Inter. de cred.:", cred_inter[3]
-print "Amplitud 2 modelo 2:", emargins[4], "Inter. de cred.:", cred_inter[4]
-print "Ancho 2 modelo 2:", emargins[5], "Inter. de cred.:", cred_inter[5]
+print "Amplitud modelo 1:", emargins[0]/scala, "[erg s^-1 Hz^-1 cm^-2]"
+print "Inter. de cred.:", cred_inter[0], "[erg s^-1 Hz^-1 cm^-2]"
+print "Ancho modelo 1:", emargins[1], "[A]"
+print "Inter. de cred.:", cred_inter[1], "[A]"
+print ""
+print "Amplitud 1 modelo 2:", emargins[2]/scala, "[erg s^-1 Hz^-1 cm^-2]"
+print "Inter. de cred.:", cred_inter[2], "[erg s^-1 Hz^-1 cm^-2]"
+print "Ancho 1 modelo 2:", emargins[3], "[A]"
+print "Inter. de cred.:", cred_inter[3], "[A]"
+print "Amplitud 2 modelo 2:", emargins[4]/scala, "[erg s^-1 Hz^-1 cm^-2]"
+print "Inter. de cred.:", cred_inter[4], "[erg s^-1 Hz^-1 cm^-2]"
+print "Ancho 2 modelo 2:", emargins[5], "[A]"
+print "Inter. de cred.:", cred_inter[5], "[A]"
 
 # Plots
 plt.clf()
@@ -65,8 +90,8 @@ plt.plot(domA1/scala, A1*scala)
 plt.title('Densidad de probabilidad, amplitud, modelo 1')
 plt.xlabel('Amplitud [erg $s^{-1}$ $Hz^{-1}$ $cm^{-2}$]')
 plt.axvline(x=emargins[0]/scala, color='g')
-plt.axvline(x=cred_inter[0][0]/scala, color='r')
-plt.axvline(x=cred_inter[0][1]/scala, color='r')
+plt.axvline(x=cred_inter[0][0], color='r')
+plt.axvline(x=cred_inter[0][1], color='r')
 plt.savefig('A1.eps')
 
 plt.figure(2)
@@ -83,8 +108,8 @@ plt.plot(domA21/scala, A21*scala)
 plt.title('Densidad de probabilidad, amplitud 1, modelo 2')
 plt.xlabel('Amplitud [erg $s^{-1}$ $Hz^{-1}$ $cm^{-2}$]')
 plt.axvline(x=emargins[2]/scala, color='g')
-plt.axvline(x=cred_inter[2][0]/scala, color='r')
-plt.axvline(x=cred_inter[2][1]/scala, color='r')
+plt.axvline(x=cred_inter[2][0], color='r')
+plt.axvline(x=cred_inter[2][1], color='r')
 plt.savefig('A21.eps')
 
 plt.figure(4)
@@ -101,8 +126,8 @@ plt.plot(domA22/scala, A22*scala)
 plt.title('Densidad de probabilidad, amplitud 2, modelo 2')
 plt.xlabel('Amplitud [erg $s^{-1}$ $Hz^{-1}$ $cm^{-2}$]')
 plt.axvline(x=emargins[4]/scala, color='g')
-plt.axvline(x=cred_inter[4][0]/scala, color='r')
-plt.axvline(x=cred_inter[4][1]/scala, color='r')
+plt.axvline(x=cred_inter[4][0], color='r')
+plt.axvline(x=cred_inter[4][1], color='r')
 plt.savefig('A22.eps')
 
 plt.figure(6)
