@@ -44,3 +44,16 @@ def gauss2d(x, y, mat_sigma, ):
 
 
 # main
+x_sample, y_sample = leer_archivo('espectro.dat')
+with pm.Model() as basic_model:
+    # priors
+    beta0 = pm.Normal('beta0', mu=, sd=)
+    beta1 = pm.Normal('beta1', mu=, sd=)
+    beta2 = pm.Normal('beta2', mu=, sd=)
+    beta3 = pm.Normal('beta3', mu=, sd=)
+    # valor esperado
+    p = A1, sigma1, A2, sigma2
+    y_out = modelo_2(p, x)
+    # likelihood
+    Y_obs = pm.Normal('Y_obs', mu=y_out, sd=, observed=y_exp)
+map_estimate = pm.find_MAP(model=basic_model)
