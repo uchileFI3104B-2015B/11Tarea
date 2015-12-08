@@ -20,7 +20,7 @@ def leer_archivo(nombre):
 
 def modelo_1(p, x):
     A, sigma = p
-    a = 1e - 16
+    a = 10 ** (- 16)
     mu = 6563
     y = a - A * scipy.stats.norm(loc=mu, scale=sigma).pdf(x)
     return y
@@ -28,10 +28,9 @@ def modelo_1(p, x):
 
 def modelo_2(p, x):
     A1, sigma1, A2, sigma2 = p
-    a = 1e - 16
+    a = 10 ** (- 16)
     mu = 6563
-    y = a - A1 * scipy.stats.norm(loc=mu, scale=sigma1).pdf(x) -
-        A2 * scipy.stats.norm(loc=mu, scale=sigma2).pdf(x)
+    y = a - A1 * scipy.stats.norm(loc=mu, scale=sigma1).pdf(x) - A2 * scipy.stats.norm(loc=mu, scale=sigma2).pdf(x)
     return y
 
 
@@ -47,13 +46,13 @@ def gauss2d(x, y, mat_sigma, ):
 x_sample, y_sample = leer_archivo('espectro.dat')
 with pm.Model() as basic_model:
     # priors
-    beta0 = pm.Normal('beta0', mu=, sd=)
-    beta1 = pm.Normal('beta1', mu=, sd=)
-    beta2 = pm.Normal('beta2', mu=, sd=)
-    beta3 = pm.Normal('beta3', mu=, sd=)
+    beta0 = pm.Normal('beta0', mu=6563, sd=100)
+    beta1 = pm.Normal('beta1', mu=6563, sd=100)
+    beta2 = pm.Normal('beta2', mu=6563, sd=100)
+    beta3 = pm.Normal('beta3', mu=6563, sd=100)
     # valor esperado
     p = A1, sigma1, A2, sigma2
     y_out = modelo_2(p, x)
     # likelihood
-    Y_obs = pm.Normal('Y_obs', mu=y_out, sd=, observed=y_exp)
+    Y_obs = pm.Normal('Y_obs', mu=y_out, sd=1.5, observed=y_exp)
 map_estimate = pm.find_MAP(model=basic_model)
