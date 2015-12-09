@@ -3,6 +3,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats
 
+plt.style.use('bmh')
+plt.rcParams['xtick.labelsize'] = 'large'
+plt.rcParams['ytick.labelsize'] = 'large'
+plt.rcParams['figure.figsize'] = '7, 5'
+
 
 def leer_archivo(nombre):
     '''
@@ -10,8 +15,8 @@ def leer_archivo(nombre):
     nombre debe ser un str
     '''
     datos = np.loadtxt(nombre)
-    x = datos[:, 0]
-    y = datos[:, 1]
+    x = np.array(datos[:, 0])
+    y = np.array(datos[:, 1])
     return x, y
 
 
@@ -48,7 +53,7 @@ def prior(beta, p, model=2):
         s2 = ((beta2 - a2) / b2) ** 2
         s3 = ((beta3 - a3) / b3) ** 2
         s = (s0 + s1 + s2 + s3) / 2.
-        P = np.exp(s) / (4 * np.pi ** 2 * b0 * b1 * b2 * b3)
+        P = np.exp(-s) / (4 * np.pi ** 2 * b0 * b1 * b2 * b3)
         return P
     elif model == 1:
         beta0, beta1 = beta
@@ -56,23 +61,23 @@ def prior(beta, p, model=2):
         s0 = ((beta0 - a0) / b0) ** 2
         s1 = ((beta1 - a1) / b1) ** 2
         s = (s0 + s1) / 2.
-        P = np.exp(s) / (2 * np.pi * b0 * b1)
+        P = np.exp(-s) / (2 * np.pi * b0 * b1)
         return P
 
 
 def fill_prior(beta_grid, prior_p, model=2):
     if model == 2:
         beta0_grid, beta1_grid, beta2_grid, beta3_grid = beta_grid
-        salida = np.zeros(beta0_grid)
+        salida = np.zeros(beta0_grid.shape)
         ni, nj, nk, nl = beta0_grid.shape
         for i in range(ni):
             for j in range(nj):
                 for k in range(nk):
                     for l in range(nl):
-                        salida[i, j, k, l] = prior([beta0_grid[i, j, k, l], beta1_grid[i,j, k, l], beta2_grid[i, j, k, l], beta3_grid[i,j, k, l]], prior_p, modelo=2)
+                        salida[i, j, k, l] = prior([beta0_grid[i, j, k, l], beta1_grid[i,j, k, l], beta2_grid[i, j, k, l], beta3_grid[i,j, k, l]], prior_p, 2)
     elif model == 1:
         beta0_grid, beta1_grid = beta_grid
-        salida = np.zeros(beta0_grid)
+        salida = np.zeros(beta0_grid.shape)
         ni, nj = beta0_grid.shape
         for i in range(ni):
             for j in range(nj):
@@ -82,10 +87,7 @@ def fill_prior(beta_grid, prior_p, model=2):
 
 def likelihood(beta, datos, error, model=2):
     x, y = datos
-    try:
-        N = len(x)
-    except:
-        N = 1
+    N = len(x)
     if model == 2:
         s = np.sum(y - modelo_2(beta, x))
         L = (2 * np.pi * error ** 2) ** (-N / 2.) * np.exp(- s / (2 * error ** 2))
@@ -98,20 +100,20 @@ def likelihood(beta, datos, error, model=2):
 def fill_likelihood(beta_grid, datos, error, model=2):
     if model == 2:
         beta0_grid, beta1_grid, beta2_grid, beta3_grid = beta_grid
-        salida = np.zeros(beta0_grid)
+        salida = np.zeros(beta0_grid.shape)
         ni, nj, nk, nl = beta0_grid.shape
         for i in range(ni):
             for j in range(nj):
                 for k in range(nk):
                     for l in range(nl):
-                        salida[i, j, k, l] = likelihood([beta0_grid[i, j, k, l], beta1_grid[i,j, k, l], beta2_grid[i, j, k, l], beta3_grid[i,j, k, l]], prior_p, modelo=2)
+                        salida[i, j, k, l] = likelihood([beta0_grid[i, j, k, l], beta1_grid[i,j, k, l], beta2_grid[i, j, k, l], beta3_grid[i,j, k, l]], datos, error, 2)
     elif model == 1:
         beta0_grid, beta1_grid = beta_grid
-        salida = np.zeros(beta0_grid)
+        salida = np.zeros(beta0_grid.shape)
         ni, nj = beta0_grid.shape
         for i in range(ni):
             for j in range(nj):
-                salida[i, j] = likelihood([beta0_grid[i, j], beta1_grid[i,j]], prior_p, 1)
+                salida[i, j] = likelihood([beta0_grid[i, j], beta1_grid[i,j]], datos, error, 1)
     return salida
 
 
@@ -123,7 +125,6 @@ def chi_cuad(f, x, y, p):
     return chi
 
 
-# funciones del profe:
 def make_figure_axes(x, y, fig_number=1, fig_size=8):
     '''
     Creates a set of 3 axes to plot 2D function + marginals
@@ -196,4 +197,24 @@ def plot_distribution(x, y, z, cmap='viridis'):
 
     ax_marginal_x.set_xlim(x_limits)
     ax_marginal_y.set_ylim(y_limits)
+    plt.show()
     return ax_main, ax_marginal_x, ax_marginal_y
+
+
+# main
+adivinanza1 = 1e-17, 10.
+adivinanza2 = 1e-17, 1e-17 / 2., 10., 10.
+x, y = leer_archivo('espectro.dat')
+datos = (x, y)
+error = 1
+beta_grid1 = np.mgrid[1e-17 / 2.:2 * 1e-17:10j, 5:15:10j]
+beta0_grid, beta1_grid = beta_grid1
+ad1 = [1e-17, 1e-16, 10, 10]
+a = fill_prior(beta_grid1, ad1, 1)
+b = fill_likelihood(beta_grid1, datos, error, 1)
+beta_grid2 = np.mgrid[1e-17 / 2.:2 * 1e-17:10j, 5:15:10j, 1e-17 / 4.:1e-17:10j, 5:15:10j]
+ad2 = [1e-17, 1e-16, 10, 10, 1e-17 / 2, 1e-16, 10, 10]
+c = fill_prior(beta_grid2, ad2, 2)
+d = fill_likelihood(beta_grid2, datos, error, 2)
+plot_distribution(beta0_grid, beta1_grid, a * b)
+plt.show()

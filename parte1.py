@@ -64,9 +64,9 @@ def gauss2d(x, y, mat_sigma, ):
 x_sample, y_sample = leer_archivo('espectro.dat')
 # inicializacion
 A1 = 1e-17
-A2 = 1e-17
-sigma1 = 7.
-sigma2 = 7.
+A2 = 1e-17 / 2
+sigma1 = 10.
+sigma2 = 10.
 a = 10 ** (- 16)
 mu = 6563
 p = A1, sigma1, A2, sigma2
