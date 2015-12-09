@@ -77,12 +77,20 @@ with pm.Model() as basic_model:
     beta2 = pm.Normal('beta2', mu=A2, sd=1)
     beta3 = pm.Normal('beta3', mu=sigma2, sd=1)
     # valor esperado
-    p1 = beta0, beta1, beta2, beta3
     #y_out = modelo_2(p1, x_sample)
+    #y_out = tt.as_tensor_variable(10 ** (- 16)) - tt.as_tensor_variable(beta0) * pm.Normal('a', mu=6563, sd=beta1) - tt.as_tensor_variable(beta2) * pm.Normal('b', mu=6563, sd=beta2)
     y_out = tt.as_tensor_variable(10 ** (- 16) - beta0 * tt.exp(tt.as_tensor_variable(- (x_sample - 6563) ** 2 / (2 * beta1 ** 2))) - beta2 * tt.exp(tt.as_tensor_variable(- (x_sample - 6563) ** 2 / (2 * beta3 ** 2))))
     #y_out = modelo_doble(beta0, beta1, beta2, beta3, x_sample)
     #y_out = a - beta0 * gauss(mu, beta1, x_sample) - beta2 * gauss(mu, beta3, x_sample)
     # likelihood
     Y_obs = pm.Normal('Y_obs', mu=y_out, sd=1.5, observed=y_sample)
-map_estimate = pm.find_MAP(model=basic_model)
-print map_estimate
+    map_estimate = pm.find_MAP(model=basic_model)
+    print map_estimate
+'''
+with basic_model:
+    trace = pm.sample(5000, start=map_estimate)
+plt.pcolormesh(beta0_grid, beta1_grid, likelihood_grid * prior_grid, cmap='viridis')
+plt.xlim(-5, 11)
+plt.ylim(1,  6)
+plt.plot(trace.beta0, trace.beta1, marker='None', ls='-', lw=0.3, color='w')
+'''
