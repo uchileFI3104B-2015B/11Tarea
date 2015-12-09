@@ -25,9 +25,9 @@ def modelo_2(x, Amplitud1, sigma1, Amplitud2, sigma2):
     Retorna la función correspondiente al primer modelo, es decir, la suma
     de dos gaussianas trasladada en 1e-16
     '''
-    Gauss1 = Amplitud1 * scipy.stats.cauchy(loc=6563, scale=sigma1).pdf(x)
-    Gauss2 = Amplitud2 * scipy.stats.cauchy(loc=6563, scale=sigma2).pdf(x)
-    return 1e-16 - (Gauss2 + Gauss1)
+    gauss1 = (Amplitud1 * scipy.stats.norm(loc=6563, scale=sigma1).pdf(x))
+    gauss2 = (Amplitud2 * scipy.stats.norm(loc=6563, scale=sigma2).pdf(x))
+    return 1e-16 - gauss1 - gauss2
 
 def chi2(data, parametros_modelo, funcion_modelo):
     x_datos = data[0]
@@ -59,8 +59,8 @@ print ''
 
 # Modelo 2:
 Amplitud1_mod2 = 0.02e-16
-sigma1_mod2 = 7.6
-Amplitud2_mod2 = 0.06e-16
+sigma1_mod2 = 6.
+Amplitud2_mod2 = 0.07e-16
 sigma2_mod2 = 1.5
 adivinanza_mod2 = [Amplitud1_mod2, sigma1_mod2, Amplitud2_mod2, sigma2_mod2]
 param_optimo2, param_covar2 = curve_fit(modelo_2, wavelength, Fnu,
@@ -87,9 +87,9 @@ plt.plot(x, modelo_1(x, *param_optimo1), label='Modelo 1 (Gaussiana simple)',
 plt.plot(x, modelo_2(x, *param_optimo2), '--', color='fuchsia',  linewidth=2.0,
          label='Modelo 2 (Gaussiana doble)')
 plt.plot(x, modelo_1(x, Amplitud1_mod2, sigma1_mod2), '--', color='g',
-         label='Gaussiana 1 del modelo 2')
+         label='Gaussiana 1 (modelo 2)', alpha=0.8)
 plt.plot(x, modelo_1(x, Amplitud2_mod2, sigma2_mod2), '-.', color='g',
-         label='Gaussiana 2 del modelo 2')
+         label='Gaussiana (modelo 2)', alpha=0.8)
 plt.xlabel('Wavelength [$\AA$]', fontsize=16)
 plt.ylabel('$F_v$[erg s$^{-1}$Hz$^{-1}$cm$^{-2}$]', fontsize=16)
 plt.xlim(6520, 6600)
