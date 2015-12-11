@@ -59,7 +59,7 @@ for i in range(len(margins)):
             while margins[i][right] > margins[i][left]:
                 s += dx * margins[i][right]
                 right += 1
-            xr = (doms[i][right-1] + (doms[i][right]-doms[i][right-1])*
+            xr = (doms[i][right-1] + (doms[i][right]-doms[i][right-1]) *
                   (margins[i][left]-margins[i][right-1]) /
                   (margins[i][right]-margins[i][right-1]))
         elif s < 0.68:
@@ -67,7 +67,7 @@ for i in range(len(margins)):
             while margins[i][left] >= margins[i][right]:
                 s += dx * margins[i][left]
                 left -= 1
-            xl = (doms[i][left] + (doms[i][left+1]-doms[i][left])*
+            xl = (doms[i][left] + (doms[i][left+1]-doms[i][left]) *
                   (margins[i][right]-margins[i][left]) /
                   (margins[i][left+1]-margins[i][left]))
     cred_inter.append((xl, xr))
