@@ -5,13 +5,35 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats
 from scipy.optimize import curve_fit
+import pymc3 as pm
+import theano.tensor as T
 
 '''
 En este código se busca modelar el ensanchamiento de una linea de absorcion
-en un espectro de radiación.
+en un espectro de radiación, mediante técnicas bayesianas.
 Para ello se utilizan dos modelos: uno gaussiano simple y otro con dos
-funciones gaussianas
+funciones gaussianas.
 '''
+
+
+def modelo_1(x, A, sigma):
+    '''
+    Retorna la función correspondiente al primer modelo, es decir, una
+    gaussiana trasladada en 1e-16
+    '''
+    return 1e-16 - A * scipy.stats.cauchy(loc=6563, scale=sigma).pdf(x)
+
+
+def modelo_2(x, Amplitud1, sigma1, Amplitud2, sigma2):
+    '''
+    Retorna la función correspondiente al primer modelo, es decir, la suma
+    de dos gaussianas trasladada en 1e-16
+    '''
+    gauss1 = (Amplitud1 * scipy.stats.norm(loc=6563, scale=sigma1).pdf(x))
+    gauss2 = (Amplitud2 * scipy.stats.norm(loc=6563, scale=sigma2).pdf(x))
+    return 1e-16 - gauss1 - gauss2
+
+
 def make_figure_axes(x, y, fig_number=1, fig_size=8):
     '''
     Creates a set of 3 axes to plot 2D function + marginals
@@ -87,32 +109,6 @@ def plot_distribution(x, y, z, cmap='PuBu_r'):
     return ax_main, ax_marginal_x, ax_marginal_y
 
 
-def modelo_1(x, A, sigma):
-    '''
-    Retorna la función correspondiente al primer modelo, es decir, una
-    gaussiana trasladada en 1e-16
-    '''
-    return 1e-16 - A * scipy.stats.cauchy(loc=6563, scale=sigma).pdf(x)
-
-
-def modelo_2(x, Amplitud1, sigma1, Amplitud2, sigma2):
-    '''
-    Retorna la función correspondiente al primer modelo, es decir, la suma
-    de dos gaussianas trasladada en 1e-16
-    '''
-    gauss1 = (Amplitud1 * scipy.stats.norm(loc=6563, scale=sigma1).pdf(x))
-    gauss2 = (Amplitud2 * scipy.stats.norm(loc=6563, scale=sigma2).pdf(x))
-    return 1e-16 - gauss1 - gauss2
-
-
-def chi2(data, parametros_modelo, funcion_modelo):
-    x_datos = data[0]
-    y_datos = data[1]
-    y_modelo = funcion_modelo(x_datos, *parametros_modelo)
-    chi2 = (y_datos - y_modelo)**2
-    return np.sum(chi2)
-
-
 def likelihood(data, params, modelo):
     '''
     Calcula la verosimilitud para cierto modelo
@@ -161,30 +157,47 @@ x = np.linspace(min(wavelength), max(wavelength), 100)
 # Modelo 1:
 Amplitud_mod1 = Fnu.max() - Fnu.min()
 sigma_mod1 = 6  # Del gráfico
-adivinanza_mod1 = [Amplitud_mod1, sigma_mod1]
-param_optimo1, param_covar1 = curve_fit(modelo_1, wavelength, Fnu,
-                                        adivinanza_mod1)
-Amplitud_mod1, sigma_mod1 = param_optimo1
-chi2_1 = chi2([wavelength, Fnu], param_optimo1, modelo_1)
+adivinanza_mod1 = [Amplitud_mod1, 0.1e-16, sigma_mod1, 2]
+
 
 beta0_grid, beta1_grid = np.mgrid[-4:4:201j, -2:2:201j]
 n0, n1 = beta0_grid.shape
 prior_m1 = np.zeros((n0, n1))
 likelihood_m1 = np.zeros((n0, n1))
-
 for i in range(n0):
     for j in range(n1):
-        prior_m1[i, j] = prior([beta0_grid[i, j], beta1_grid[i, j]], [9.9e-17, 0.5, 3.4, 0.5])
+        prior_m1[i, j] = prior([beta0_grid[i, j], beta1_grid[i, j]], adivinanza_mod1)
         likelihood_m1[i, j] = likelihood([beta0_grid[i, j], beta1_grid[i, j]], [wavelength, Fnu], modelo_1)
 
+with pm.Model() as basic_model:
 
-print 'Primer modelo: Gaussiana simple'
-print 'Amplitud                :', Amplitud_mod1
-print 'sigma                   :', sigma_mod1
-print 'Chi2                    :', chi2_1
-print 'Verosimilitud del modelo:', likelihood([wavelength, Fnu], param_optimo1,
-                                              modelo_1)
-print ''
+    # Priors for unknown model parameters
+    Amplitud_mod1 = pm.Normal('Amplitud_mod1', mu=adivinanza_mod1[0], sd=adivinanza_mod1[1])
+    sigma_mod1 = pm.Normal('sigma_mod1', mu=adivinanza_mod1[2], sd=adivinanza_mod1[3])
+
+    # Expected value of outcome
+    y_out = Amplitud_mod1 * (1 / (sigma_mod1* np.sqrt(2*np.pi))) * T.exp (-0.5 * ((wavelength - 6563) / sigma_mod1)**2)
+
+    # Likelihood (sampling distribution) of observations
+    Y_obs = pm.Normal('Y_obs', mu=y_out, sd=1.5, observed=Fnu)
+
+
+map_estimate = pm.find_MAP(model=basic_model)
+
+print(map_estimate)
+with basic_model:
+    trace = pm.sample(5000, start=map_estimate)
+
+
+
+#
+# print 'Primer modelo: Gaussiana simple'
+# print 'Amplitud                :', Amplitud_mod1
+# print 'sigma                   :', sigma_mod1
+# print 'Chi2                    :', chi2_1
+# print 'Verosimilitud del modelo:', likelihood([wavelength, Fnu], param_optimo1,
+#                                               modelo_1)
+# print ''
 
 # Modelo 2:
 Amplitud1_mod2 = 0.02e-16
@@ -197,15 +210,15 @@ param_optimo2, param_covar2 = curve_fit(modelo_2, wavelength, Fnu,
 Amplitud1_mod2, sigma1_mod2, Amplitud2_mod2, sigma2_mod2 = param_optimo2
 chi2_2 = chi2([wavelength, Fnu], param_optimo2, modelo_2)
 
-print 'Segundo modelo: Gaussiana doble'
-print 'Amplitud 1              :', Amplitud1_mod2
-print 'sigma 1                 :', sigma1_mod2
-print 'Amplitud 2              :', Amplitud2_mod2
-print 'sigma 2                 :', sigma2_mod2
-print 'Chi2                    :', chi2_2
-print 'Verosimilitud del modelo:', likelihood([wavelength, Fnu], param_optimo2,
-                                              modelo_2)
-print ''
+# print 'Segundo modelo: Gaussiana doble'
+# print 'Amplitud 1              :', Amplitud1_mod2
+# print 'sigma 1                 :', sigma1_mod2
+# print 'Amplitud 2              :', Amplitud2_mod2
+# print 'sigma 2                 :', sigma2_mod2
+# print 'Chi2                    :', chi2_2
+# print 'Verosimilitud del modelo:', likelihood([wavelength, Fnu], param_optimo2,
+#                                               modelo_2)
+# print ''
 
 
 # Plots
@@ -215,26 +228,10 @@ plt.rcParams['xtick.labelsize'] = 'large'
 plt.rcParams['ytick.labelsize'] = 'large'
 plot_distribution(beta0_grid, beta1_grid, prior_m1 * likelihood_m1)
 
-
-plt.figure(2, figsize=(10, 7))
-plt.style.use('bmh')
-plt.plot(wavelength, Fnu, color='brown', drawstyle='steps-post',
-         label='Datos')
-plt.plot(x, modelo_1(x, *param_optimo1), label='Modelo 1 (Gaussiana simple)',
-         linewidth=2.0)
-plt.plot(x, modelo_2(x, *param_optimo2), '--', color='fuchsia',  linewidth=2.0,
-         label='Modelo 2 (Gaussiana doble)')
-plt.plot(x, modelo_1(x, Amplitud1_mod2, sigma1_mod2), '--', color='g',
-         label='Gaussiana 1 (modelo 2)', alpha=0.8)
-plt.plot(x, modelo_1(x, Amplitud2_mod2, sigma2_mod2), '-.', color='g',
-         label='Gaussiana (modelo 2)', alpha=0.8)
-plt.xlabel('Wavelength [$\AA$]', fontsize=16)
-plt.ylabel('$F_v$[erg s$^{-1}$Hz$^{-1}$cm$^{-2}$]', fontsize=16)
-plt.xlim(6520, 6600)
-plt.ylim(0.9e-16, 1.02e-16)
-plt.legend(loc='lower left')
-plt.grid(False)
-# plt.savefig('Fits_espectro.eps')
-
+plt.figure(2)
+plt.pcolormesh(beta0_grid, beta1_grid, likelihood_m1 * prior_m1, cmap='PuBu_r')
+plt.xlim(-4, 4)
+plt.ylim(-2,  2)
+plt.plot(trace.beta0, trace.beta1, marker='None', ls='-', lw=0.3, color='w')
 
 plt.show()
