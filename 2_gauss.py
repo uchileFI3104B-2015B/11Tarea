@@ -10,6 +10,8 @@ import pdb
 from pymc3 import find_MAP
 from pymc3 import Model, Normal, HalfNormal
 import theano.tensor as T
+from pymc3 import traceplot
+from pymc3 import NUTS, sample
 from scipy.stats import multivariate_normal
 
 ESCALA = 1e18
@@ -67,5 +69,10 @@ ax1.set_xlabel("Longitud de onda [Angstrom]")
 ax1.set_ylabel("$F_\\nu [erg s^{-1} Hz^{-1}cm^{-2}] \\times 1e17$")
 ax1.set_xlim(wl.min(), wl.max())
 plt.legend(loc=4)
-plt.savefig("fit 2 gaussianas")
+plt.savefig("fit 2 gaussianas.jpg")
+
+with basic_model:
+    trace = sample(5000, start=map_estimate)
+traceplot(trace)
+plt.savefig("graf2.jpg")
 plt.show()
