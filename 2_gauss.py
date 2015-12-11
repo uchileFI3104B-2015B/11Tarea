@@ -16,6 +16,28 @@ from scipy.stats import multivariate_normal
 
 ESCALA = 1e18
 
+
+def prior(beta, params):
+    beta0, beta1, beta2, beta3 = beta
+    mu0, sigma0, mu1, sigma1, mu2, sigma2, mu3, sigma3 = params
+    S = -1. / 2 * ((beta0 - mu0)**2 / sigma0**2 + (beta1 - mu1)**2 / sigma1**2 + (beta2 - mu2)**2 / sigma2**2 + (beta3 - mu3)**2 / sigma3**2)
+    P = np.exp(S) / ((2 * np.pi)**2 * sigma0 * sigma1 * sigma2 * sigma3)
+    return P
+
+
+def likelihood(beta, data, sigma_datos):
+    beta0, beta1, beta2, beta3 = beta
+    x, y = data
+    try:
+        N = len(x)
+    except:
+        N = 1
+    mu = 6563
+    S = np.sum((y - 1e-16 * ESCALA - beta0 * norm(loc=mu, scale=beta1).pdf(x) - beta2 * norm(loc=mu, scale=beta3).pdf(x))**2)
+    L = (2 * np.pi * sigma_datos**2)**(-N / 2.) * np.exp(-S / 2 / sigma_datos**2)
+    return L
+
+
 def importar_datos(txt):
     ''' función que retorna arreglos por cada columna del archivo de datos'''
     data = np.loadtxt(txt)
@@ -45,9 +67,9 @@ basic_model = Model()
 with basic_model:
 
     # Priors for unknown model parameters
-    A = Normal('amplitud', mu=1e-17 * ESCALA, sd=100)
+    A = Normal('amplitud', mu=1e-17 * ESCALA, sd=1e16 * ESCALA)
     sigma = Normal('sigma', mu=8, sd=100)
-    A2 = Normal('amplitud 2', mu=1e-17 * ESCALA, sd=100)
+    A2 = Normal('amplitud 2', mu=1e-17 * ESCALA, sd=1e16 * ESCALA)
     sigma2 = Normal('sigma 2', mu=4, sd=100)
 
     mu = 6563
@@ -72,7 +94,24 @@ plt.legend(loc=4)
 plt.savefig("fit 2 gaussianas.jpg")
 
 with basic_model:
-    trace = sample(5000, start=map_estimate)
+    trace = sample(500, start=map_estimate)
 traceplot(trace)
 plt.savefig("graf2.jpg")
 plt.show()
+
+# Usaremos una gaussiana 2D
+# los parametros adecuados los podemos estimar de la muestra obtenida usando pymc3 o Metropolis.
+mu = [map_estimate["amplitud"], map_estimate["sigma"], map_estimate["amplitud 2"], map_estimate["sigma 2"]]
+algo = 1e-3
+sigma = [[algo,0, 0, 0], [0, algo, 0, 0], [0, 0, algo, 0], [0 ,0, 0, algo]] # Ver que pasa con covarianza = -0.5
+nd_normal = multivariate_normal(mu, sigma)
+
+prior_params = [map_estimate["amplitud"], 1e16 * ESCALA, map_estimate["sigma"], 100, map_estimate["amplitud 2"], 1e16 * ESCALA, map_estimate["sigma 2"], 100]
+N_sample = 500
+random_points = nd_normal.rvs(N_sample)
+suma = 0
+for p in random_points:
+    posterior = likelihood(p, [wl, fnu], sigma_datos) * prior(p, prior_params)
+    suma += posterior / nd_normal.pdf(p)
+print ("")
+print suma / N_sample

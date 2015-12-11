@@ -152,3 +152,19 @@ A, sigma = calcular_esperanza_param(beta0_grid[:, 0], marginal_b0, beta1_grid[0]
 print ("valores de esperanza para, amplitud = {}, varianza= {} ".format(A, sigma))
 graficar_fit(wl, fnu, A, sigma, gauss)
 plt.show()
+
+# calculo de evidencia
+
+n0, n1 = beta0_grid.shape
+prior_m1 = np.zeros((n0, n1))
+likelihood_m1 = np.zeros((n0, n1))
+
+for i in range(n0):
+    for j in range(n1):
+        prior_m1[i, j] = prior([beta0_grid[i, j], beta1_grid[i, j]], [1, 100, 5, 100])
+        likelihood_m1[i, j] = likelihood([beta0_grid[i, j], beta1_grid[i, j]], [wl, fnu], gauss, sigma_datos)
+
+dx = 1.5 * 1e-16 * ESCALA / 100
+dy = 0.6 / 100
+P_E_M1 = np.sum(prior_m1 * likelihood_m1) * dx * dy
+print 'P(D|M1) = ', P_E_M1
