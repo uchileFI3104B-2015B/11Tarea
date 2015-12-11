@@ -141,6 +141,8 @@ fnu = datos[:, 1]
 fnu=fnu*(10**18)
 plt.figure(0)
 plt.plot(w,fnu)
+plt.xlabel('Longitud de onda w [Angstrom]')
+plt.ylabel('Flujo por unidad de freuencia [erg / s / Hz / cm^2 * 10^18]')
 
 x, y = np.mgrid[6000:7000:50j, 50:200:50j]
     
