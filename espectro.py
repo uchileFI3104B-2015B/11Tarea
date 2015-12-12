@@ -108,16 +108,16 @@ def fill_prior(b_grid, params, dim):
     '''
     if dim == 2:
         b0_grid, b1_grid = b_grid
-        output = np.zeros(b0_grid.shape)
         ni, nj = b0_grid.shape
+        output = np.zeros([ni, nj])
         for i in range(ni):
             for j in range(nj):
                 coord = [b0_grid[i, j], b1_grid[i, j]]
                 output[i, j] = prior(coord, params, dim)
     if dim == 4:
         b0_grid, b1_grid, b2_grid, b3_grid = b_grid
-        output = np.zeros(b0_grid.shape)
         ni, nj, nk, nl = b0_grid.shape
+        output = np.zeros([ni, nj, nk, nl])
         for i in range(ni):
             for j in range(nj):
                 for k in range(nk):
@@ -153,24 +153,24 @@ def likelihood(beta, x, y, error, dim):
     return L
 
 
-def fill_likelihood(beta, x, y, error, dim):
+def fill_likelihood(b_grid, x, y, error, dim):
     '''
     Crea una malla de Verosimilitudes para las combinaciones de variables.
     Los input son las mallas de parametros, mas los parametros que modelan
     la gaussiana de distribucion de los parametros buscados.
     '''
     if dim == 2:
-        b0_grid, b1_grid = beta
+        b0_grid, b1_grid = b_grid
         ni, nj = b0_grid.shape
-        output = np.zeros(ni, nj)
+        output = np.zeros([ni, nj])
         for i in range(ni):
             for j in range(nj):
-                coor = [b0_grid[i,j], b1_grid[i,j]]
+                coor = [b0_grid[i, j], b1_grid[i, j]]
                 output[i, j] = likelihood(coor, x, y, error, dim)
     if dim == 4:
-        b0_grid, b1_grid, b2_grid, b3_grid = beta
+        b0_grid, b1_grid, b2_grid, b3_grid = b_grid
         ni, nj, nk, nl = b0_grid.shape
-        output = np.zeros(ni, nj, nk, nl)
+        output = np.zeros([ni, nj, nk, nl])
         for i in range(ni):
             for j in range(nj):
                 for k in range(nk):
@@ -181,10 +181,8 @@ def fill_likelihood(beta, x, y, error, dim):
     return output
 
 
-def chi(func, x, y, parametros):
-    chi2 = 0
-    for i in range(len(x)):
-        chi2 += (y[i] - func(x[i], *parametros))**2
+def chi(func, x, y, pars):
+    chi2 = np.sum((y - func(x, *pars))**2)
     return chi2
 
 
@@ -259,8 +257,9 @@ def resultados_gauss(x, y, seeds=False):
     p.grid(True)
     p.show()
 
+
 #############################################################################
-#                                                                           #
+#                               AJUSTE DATOS                                #
 #############################################################################
 
 # Leer datos
@@ -278,4 +277,32 @@ seeds = [1e-17, 7., 1e-17, 7.]
 
 # Resultados
 resultados_gauss(x, y, seeds)
-print 'Desviacion STD fuera de la linea de absorcion = ', desviacion(y, 50, 76)
+error = desviacion(y, 50, 76)
+print 'Desviacion STD fuera de la linea de absorcion = ', error
+
+#############################################################################
+#                             DOS DIMENSIONES                               #
+#############################################################################
+
+b_grid = np.mgrid[4e-17:11e-17:30j, 1:6:30j]
+prior_params = [7.6e-17, 1e-17, 3.7, 1]
+
+#b_grid = np.mgrid[4:11:30j, 1:6:30j]
+#prior_params = [7.6, 1, 3.7, 1]
+
+
+prior_grid = fill_prior(b_grid, prior_params, 2)
+b0_grid, b1_grid = b_grid
+
+likelihood_grid = fill_likelihood(b_grid, x, y, 1, 2)
+post_grid = likelihood_grid * prior_grid
+
+
+#'''
+p.pcolormesh(b0_grid * 10**17, b1_grid, prior_grid)
+p.gca().set_aspect('equal')
+
+p.show()
+
+#'''
+
