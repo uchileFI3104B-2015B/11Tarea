@@ -21,6 +21,7 @@ import numpy as np
 import scipy.stats
 from scipy.optimize import curve_fit
 import os
+import pymc3 as pm
 
 #############################################################################
 #                                                                           #
@@ -212,6 +213,51 @@ def desviacion(y, imin, imax):
     return np.std(z)
 
 
+def paso_metropolis(p0, d, x, y, error, params, dim):
+    '''
+    Avanza un paso con el algoritmo de metropolis. Sus input son 'p0' las
+    semilas, 'd' la distancia a avanzar, 'x' e 'y' son los datos, 'error' es
+    el error std de los datos y, 'params' los parametros de las funciones
+    prior y 'dim' las dimensiones.
+    '''
+    x0, y0 = p0
+    rx = np.random.uniform(low=-1., high=1.)
+    ry = np.random.uniform(low=-1., high=1.)
+    xp = x0 + d * rx
+    yp = y0 + d * ry
+    pri = prior([x0, y0], params, dim)
+    lik = likelihood([x0, y0], x, y, error, dim)
+    posterior_p0 = pri * lik
+    prueba_pri = prior([xp, yp], params, dim)
+    prueba_lik = likelihood([xp, yp], x, y, error, dim)
+    posterior_prueba = prueba_pri * prueba_lik
+    if (posterior_prueba / posterior_p0) > np.random.uniform(0, 1):
+        p0 = [xp, yp]
+    return p0
+
+
+def generador(xn, N, d, x, y, error, params, dim):
+    '''
+    Generador de funcion distribucion.
+    - Input: (xn semilla, Numero de bins, distancia pasos).
+    - Output: Arreglo 'y' distribuido segun w, porcentaje de pasos aceptados.
+    '''
+    y = np.zeros(N)
+    # Guardar la primera semilla
+    y[0] = np.copy(xn)
+    # Contador de aceptados y rechazados respectivamente
+    j = 0.
+    k = 0.
+    for i in range(len(y)-1):
+        y[i+1] = paso_metropolis(p0, d, x, y, error, params, dim)
+        if y[i+1] == y[i]:
+            k += 1.
+        else:
+            j += 1.
+    porcentaje = 100. * j / (j + k)
+    return y, porcentaje
+
+
 def resultados_gauss(x, y, seeds=False):
     '''
     Imprime y grafica los resultados del ajuste doble gaussiano a los
@@ -284,21 +330,42 @@ print 'Desviacion STD fuera de la linea de absorcion = ', error
 #                             DOS DIMENSIONES                               #
 #############################################################################
 
-b_grid = np.mgrid[4e-17:11e-17:30j, 1:6:30j]
-prior_params = [7.6e-17, 1e-17, 3.7, 1]
-
-#b_grid = np.mgrid[4:11:30j, 1:6:30j]
-#prior_params = [7.6, 1, 3.7, 1]
-
-
-prior_grid = fill_prior(b_grid, prior_params, 2)
+b_grid = np.mgrid[4e-17:11e-17:50j, 1.:6.:50j]
 b0_grid, b1_grid = b_grid
+dA = 7e-17 / 50
+dsigma = 5. / 50
 
+prior_params = [7.6e-17, 1e-17, 3.7, 1.]
+prior_grid = fill_prior(b_grid, prior_params, 2)
 likelihood_grid = fill_likelihood(b_grid, x, y, 1, 2)
 post_grid = likelihood_grid * prior_grid
+P_E = np.sum(post_grid) * dA * dsigma
+
+with pm.Model() as basic_model:
+    # Priors for unknown model parameters
+    beta0 = pm.Normal('beta0', mu=7.6e-17, sd=1e-17)
+    beta1 = pm.Normal('beta1', mu=3.7, sd=1.)
+    # Expected value of outcome
+    y_out = beta0 + beta1 * x
+    # Likelihood (sampling distribution) of observations
+    Y_obs = pm.Normal('Y_obs', mu=y_out, sd=1.5, observed=y)
+
+map_estimate = pm.find_MAP(model=basic_model)
+print(map_estimate)
+
+with basic_model:
+    trace = pm.sample(10000, start=map_estimate) 
+
+p.pcolormesh(b0_grid, b1_grid, likelihood_grid * prior_grid, cmap='cool')
+p.xlim(4e-17, 11e-17)
+p.ylim(1, 6)
+p.plot(trace.beta0, trace.beta1, marker='None', ls='-', lw=0.3, color='w')
+p.show()
 
 
-#'''
+
+
+'''
 p.pcolormesh(b0_grid * 10**17, b1_grid, prior_grid)
 p.gca().set_aspect('equal')
 
