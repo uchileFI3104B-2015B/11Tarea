@@ -143,10 +143,10 @@ def resultados_gauss(x, y, seeds=False):
 x, y = llamar_archivo('espectro.dat')
 
 # Puntos escogidos como inicio de la linea de absorcion
-p.plot(x[50], y[50], '*')
-p.plot(x[76], y[76], '*')
 p.plot(np.linspace(np.min(x), np.max(x), 2), np.ones(2)*1e-16, 'r', lw=1.5)
 p.plot(x, y, color='turquoise', drawstyle='steps-post', lw=2., alpha=0.8)
+p.plot(x[50], y[50], '*')
+p.plot(x[76], y[76], '*')
 p.axis([6503, 6623, 9e-17, 1.01e-16])
 p.xlabel('Angstrom')
 p.ylabel('erg / s / Hz / cm^2')
