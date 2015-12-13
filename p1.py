@@ -23,7 +23,7 @@ plt.rcParams['figure.figsize'] = '7, 5'
 
 def make_figure_axes(x, y, fig_number=1, fig_size=8):
     '''
-    Creates a set of 3 axes to plot 2D function + marginals
+    Crea un set de 3 ejes para plotear un grafico 2D funcion + marginals
     '''
     # determine max size
     size_x = x.max() - x.min()
@@ -74,7 +74,7 @@ def make_figure_axes(x, y, fig_number=1, fig_size=8):
     return ax_main, ax_marginal_x, ax_marginal_y
 
 
-def plot_distribution(x, y, z, cmap='viridis'):
+def plot_distribution(x, y, z, cmap='PuBu_r'):
     x_limits = (x.min(), x.max())
     y_limits = (y.min(), y.max())
 
@@ -112,10 +112,24 @@ def gaussiana(x, A, sigma):
 
 
 def prior(beta, params):
-    beta0, beta1 = beta
-    mu0, sigma0, mu1, sigma1 = params
-    S = -1. / 2 * ((beta0 - mu0)**2 / sigma0**2 + (beta1 - mu1)**2 / sigma1**2)
-    P = np.exp(S) / (2 * np.pi * sigma0 * sigma1)
+    '''
+    Retorna la densidad de probabilidad para cierto modelo evaluada en
+    un punto
+    '''
+    if len(beta)==2:
+        beta0, beta1 = beta
+        mu0, sigma0, mu1, sigma1 = params
+        S = -1. / 2 * ((beta0 - mu0)**2 / sigma0**2 + (beta1 - mu1)**2 / sigma1**2)
+        P = np.exp(S) / (2 * np.pi * sigma0 * sigma1)
+    elif(beta)==4
+        beta0, beta1, beta2, beta3 = beta
+        mu0, sigma0, mu1, sigma1, mu2, sigma2, mu3, sigma3 = params
+        S0 = -1. / 2 * (beta0 - mu0)**2 / sigma0**2
+        S1 = -1. / 2 * (beta1 - mu1)**2 / sigma1**2
+        S2 = -1. / 2 * (beta2 - mu2)**2 / sigma2**2
+        S3 = -1. / 2 * (beta3 - mu3)**2 / sigma3**2
+        P = np.exp(S0 + S1 + S2 + S3)
+        P = P / (2 * np.pi * sigma0 * sigma1 * sigma2 * sigma3)
     return P
 
 def fill_prior(beta0_grid, beta1_grid, prior_params):
@@ -126,14 +140,17 @@ def fill_prior(beta0_grid, beta1_grid, prior_params):
             output[i, j] = prior([beta0_grid[i,j], beta1_grid[i,j]], prior_params)
     return output
 
-def likelihood(beta, data):
+def likelihood(beta, data, modelo):
+    '''
+    Calcula verosimilitud
+    '''
     beta0, beta1 = beta
     x, y = data
     try:
         N = len(x)
     except:
         N = 1
-    S = np.sum((y - gaussiana(x, beta0, beta1))**2)
+    S = np.sum((y - modelo(x, *beta))**2)
     L = (2 * np.pi * 1.5**2)**(-N / 2.) * np.exp(-S / 2 / 1.5**2)
     return L
 
@@ -147,11 +164,14 @@ def fill_likelihood(beta0_grid, beta1_grid, data):
 
 # Main
 
-a2 = 0.02e-16, 0.04e-16, 6, 3
+# Inicializa
 x_sample, y_sample = datos()
-beta0_grid, beta1_grid = np.mgrid[-5:11:201j, 1:6:101j] # Grilla suficientemente grande
-dx = 16 / 200
-dy = 5 / 100
+x = np.linspace(min(x_sample), max(x_sample))
+
+# Grilla suficientemente grande
+beta0_grid, beta1_grid = np.mgrid[-0.0001:0.0001:201j, -5:15:201j]
+dx = 0.0002 / 200
+dy = 20 / 100
 
 prior_params = [0.08e-16, 100, 3, 100]
 prior_grid = fill_prior(beta0_grid, beta1_grid, prior_params)
