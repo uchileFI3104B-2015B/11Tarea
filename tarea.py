@@ -121,9 +121,8 @@ for i in range(len(fnu)):
         n += 1
 ruido = np.sqrt(dif_cuadrado/n)
 
-#x = np.linspace(min(wavelength), max(wavelength), 100)
-
 '''
+-----------------------------------------------------------------------------
 Modelo 1:
 '''
 A1 = fnu.max() - fnu.min()
@@ -131,7 +130,7 @@ sigma1 = 6  # Del grafico
 adivinanza1 = [A1, 1, sigma1, 3]
 
 
-beta0_grid1, beta1_grid1 = np.mgrid[-5:5:201j, 3:5:201j]
+beta0_grid1, beta1_grid1 = np.mgrid[0:5:201j, 3:5:201j]
 prior_m1 = fill_prior_1(beta0_grid1, beta1_grid1, adivinanza1)
 likelihood_m1 = fill_likelihood_1(beta0_grid1, beta1_grid1,
                                    [wavelength, fnu])
@@ -151,23 +150,24 @@ print 'sigma                   :', E_sigma1
 print ''
 
 '''
+-----------------------------------------------------------------------------
 Modelo 2:
 '''
 
 adivinanza2 =[9., 4., 2.5, 1., 10., 5., 8.5, 3.]
-beta0_grid2, beta1_grid2, beta2_grid2, beta3_grid2 = np.mgrid[0.3:0.5:11j,
-                                                              1:4:11j,
-                                                              0:1:11j,
-                                                              6:12:11j]
+beta0_grid2, beta1_grid2, beta2_grid2, beta3_grid2 = np.mgrid[0.3:0.5:51j,
+                                                              1:4:51j,
+                                                              0:1:51j,
+                                                              6:12:51j]
 prior_grid2 = fill_prior_2(beta0_grid2, beta1_grid2, beta2_grid2,
                           beta3_grid2, adivinanza2)
 likelihood_grid2 = fill_likelihood_2(beta0_grid2, beta1_grid2, beta2_grid2,
                                     beta3_grid2, [wavelength, fnu])
 post_grid2 = likelihood_grid2 * prior_grid2
-dx2 = 1.0 / 10
-dy2 = 3.0 / 10
-dj2 = 1.0 / 10
-dk2 = 6.0 / 10
+dx2 = 1.0 / 50
+dy2 = 3.0 / 50
+dj2 = 1.0 / 50
+dk2 = 6.0 / 50
 P_E2 = np.sum(post_grid2) * dx2 * dy2 * dj2 * dk2
 marg_A2_1 = (np.sum(np.sum(np.sum(post_grid2, axis=1), axis=1), axis=1) *
               dy2 * dj2 * dk2 / P_E2)
@@ -189,8 +189,3 @@ print 'Amplitud 2               :', E_A2_2
 print 'sigma 2                  :', E_sigma2_2
 print ''
 print "Factor bayesiano:", P_E1/P_E2
-fig = plt.figure(1)
-fig.clf()
-plt.plot(wavelength,fnu,'o')
-plt.draw()
-plt.show()
