@@ -37,10 +37,15 @@
 \renewcommand{\figurename}{Figura}
 \renewcommand{\tablename}{Tabla}
 \renewcommand\refname{Referencias}
-
 \def\mean#1{\left< #1 \right>}
 %\usepackage{times} % Uncomment to use the Times New Roman font
 
+\usepackage{environ}
+\NewEnviron{myequation}{%
+\begin{equation}
+\scalebox{1.1}{$\BODY$}
+\end{equation}
+}
 %----------------------------------------------------------------------------------------
 %	DOCUMENT INFORMATION
 %----------------------------------------------------------------------------------------
@@ -72,51 +77,66 @@ En el presente trabajo se estudian modelos orientados a describir una línea de 
 
 Para describir la línea se probarán dos modelos:
 
-\begin{itemize}
+\begin{enumerate}
 
 \item Línea Gaussiana Simple: A partir de la curva se observa que puede resultar conveniente describirla asumiendo que es de forma Gaussiana. En la ecuación (\ref{ec:modelo_1}) se explicita el modelo propuesto. 
 
-\begin{equation}
-f_1(\lambda) = C_0 - A e^{\frac{(\lambda - \mu_0)^2}{b}}
+\begin{myequation}
+f_1(\lambda; A, b) = C_0 - A e^{\frac{(\lambda - \lambda_0)^2}{2 b^2}}
 \label{ec:modelo_1}
-\end{equation}
+\end{myequation}
 
-Éste posee dos parámetros libres, $A$ y $b$. El valor de $\mu_0$ y $C_0$ se asume conocido, donde $\mu_0$ es la longitud de onda central de la línea de absorción y $C_0$ corresponde al nivel del continuo.  
+Éste posee dos parámetros libres, $A$ y $b$. El valor de $\lambda_0$ y $C_0$ se asume conocido, donde $\lambda_0$ es la longitud de onda central de la línea de absorción y $C_0$ corresponde al nivel del continuo.  
 
-\item Línea Gaussiana Doble: El modelo está explicitado en la ecuación (\ref{ec:modelo_2}). Se tienen los mismos parámetros conocidos $\mu_0$ y $C_0$, pero en éste hay cuatro parámetros libres: $A_1$, $A_2$, $b_1$, $b_2$.
+\item Línea Gaussiana Doble: El modelo está explicitado en la ecuación (\ref{ec:modelo_2}). Se tienen los mismos parámetros conocidos $\lambda_0$ y $C_0$, pero en éste hay cuatro parámetros libres: $A_1$, $A_2$, $b_1$, $b_2$.
 
-\begin{equation}
-f_2(\lambda) = C_0 - A_1 e^{\frac{(\lambda - \mu_0)^2}{b_1}} - A_2 e^{\frac{(\lambda - \mu_0)^2}{b_2}}
+\begin{myequation}
+f_2(\lambda; A_1, A_2, b_1, b_2) = C_0 - A_1 e^{\frac{(\lambda - \lambda_0)^2}{2 b_1^2}} - A_2 e^{\frac{(\lambda - \lambda_0)^2}{b_2^2}}
 \label{ec:modelo_2}
-\end{equation}
-\end{itemize}
+\end{myequation}
+\end{enumerate}
 
+
+% MEJORAR AL FINAL
 Los objetivos son estimar el valor de cada parámetro con un intervalo de credibilidad del 68\%, usando métodos Bayesianos , y luego utilizar métodos de selección Bayesiana de modelos para decidir cuál de los dos propuestos representa mejor los datos.
 
 \section{Metodología}
 
+\subsection{Modelo 1: Línea Gaussiana Simple}
 
+El modelo descrito por (\ref{ec:modelo_1}) posee dos parámetros libres, $A$ y $b$. Para utilizar técnicas Bayesianas de estimación es necesario definir una probabilidad a priori para el valor de cada parámetro. Dado que ambos valores están asociados a datos de un fenómeno continuo (mediciones físicas), serán modelados utilizando funciones Gaussianas.
 
-\subsection{Cálculo con Supernovas}
-\label{sec:supernovas}
+\subsubsection{Parámetro \emph{A}}
+A priori se decide que la distribución de $A$ es:
 
-En ésta Sección se estima el valor de $H_0$ usando datos de Super Novas tipo I\footnote{Freedman et al. 2000}. Con ellas se pueden medir distancias muy superiores respecto al método de las Cefeidas. La regresión para este caso puede verse en la Figura \ref{fig:regresion_supernovas}, a partir de la cual se estima $H_0 = 70.7 [\frac{km}{Mpc \cdot s}]$. El valor obtenido es muy cercano al aceptado en la actualidad por la NASA\footnote{Publicado en su sitio web \url{http://map.gsfc.nasa.gov/universe/bb_tests_exp.html}}.
+\begin{myequation}
+P(A) = \frac{1}{\sqrt{2 \pi} \sigma_A} e^{\frac{(A - \bar A)^2}{2 \sigma_{A}^2}}
+\label{ec:distr_A}
+\end{myequation}
 
-\begin{figure}[ht]
-  \centering
-  \includegraphics[scale = 0.55]{images/regresion_supernovas.png}
-  \caption{Regresión para datos de Supernovas tipo I.}
-  \label{fig:regresion_supernovas}
-\end{figure}
+Para determinar el valor de cada parámetro se debe tener en cuenta que A representa la amplitud en Flujo de la curva Gaussiana del modelo. Para determinarlos se presumirá que las mediciones no están muy alejadas de los valores medios esperados. Con todo esto, se decide lo siguiente:
 
-Para el intervalo de confianza de 95\% se realiza una simulación Bootstrap análoga al caso de las Cefeidas, obteniéndose el histograma de la Figura \ref{fig:bootstrap_supernovas}. Según esta los valores de $H_0$ con un 95\% de confianza están entre 46 y 67 $[\frac{km}{Mpc \cdot s}]$.
+\begin{itemize}
+\item $\bar A$ será la amplitud máxima medida respecto al contínuo.
 
-\begin{figure}[ht]
-  \centering
-  \includegraphics[scale = 0.55]{images/bootstrap_supernovas.png}
-  \caption{Histograma con valores de $H_0$ generados usando Bootstrap. La cantidad de muestras en esta simulación es $100 N (\log{N})^2$, con $N=36$.}
-  \label{fig:bootstrap_supernovas}  
-\end{figure}
+\item $\sigma_A$ corresponderá al error de medición de Flujo. Este último se calculará usando el estimador de desviación estándar para los datos medidos sobre el continuo conocido.
+\end{itemize}
+
+\subsubsection{Parámetro \emph{b}}
+Análogamente, la distribución escogida para $b$ es:
+
+\begin{myequation}
+P(b) = \frac{1}{\sqrt{2 \pi} \sigma_b} e^{\frac{(b - \bar b)^2}{2 \sigma_{b}^2}}
+\end{myequation}
+
+\begin{itemize}
+\item $\bar b = 0.8493(\lambda_0 - \lambda(\frac{\bar A}{2}))$
+
+\item $\sigma_b = \frac{\Delta \lambda}{2}$ Se estima a partir de la resolución en longitud de onda (resolución horizontal) del modelo.
+\end{itemize}
+
+El valor de $\bar b$ se determina usando la aproximación \emph{Full Width at Half Maximum} (FWHM), donde $\lambda(\frac{\bar A}{2})$ es uno de los valores de longitud de onda en que la línea de absorción cae a la mitad en amplitud\footnote{ Se asume que la línea de absorción es aproximadamente simétrica.}.
+
 
 \subsection{Conclusiones}
 
