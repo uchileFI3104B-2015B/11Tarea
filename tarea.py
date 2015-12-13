@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 
 
 # Funciones a utilizar (analogas al DEMO)
+
 def gauss(x, mu, sigma):
     return np.exp(-(x-mu)**2 / (2*sigma**2))/np.sqrt(2*np.pi*sigma**2)
 
@@ -40,18 +41,18 @@ def fill_prior_1(beta0_grid, beta1_grid, prior_params):
 
 # Probabilidad a priori 2
 def fill_prior_2(beta0_grid, beta1_grid, beta2_grid, beta3_grid, prior_params):
-    output = np.zeros(par0_grid.shape)
+    output = np.zeros(beta0_grid.shape)
     ni, nj, nk, nl = beta0_grid.shape
     for i in range(ni):
         for j in range(nj):
             for k in range(nk):
                 for l in range(nl):
-                    out[i, j, k, l] = prior_2([par0_grid[i, j, k, l],
-                                               par1_grid[i, j, k, l],
-                                               par2_grid[i, j, k, l],
-                                               par3_grid[i, j, k, l]],
-                                               prior_pars)
-    return out
+                    output[i, j, k, l] = prior_2([beta0_grid[i, j, k, l],
+                                               beta1_grid[i, j, k, l],
+                                               beta2_grid[i, j, k, l],
+                                               beta3_grid[i, j, k, l]],
+                                               prior_params)
+    return output
 
 
 # Similitud 1 para un set de parametros
@@ -153,6 +154,41 @@ print ''
 Modelo 2:
 '''
 
+adivinanza2 =[9., 4., 2.5, 1., 10., 5., 8.5, 3.]
+beta0_grid2, beta1_grid2, beta2_grid2, beta3_grid2 = np.mgrid[0.3:0.5:11j,
+                                                              1:4:11j,
+                                                              0:1:11j,
+                                                              6:12:11j]
+prior_grid2 = fill_prior_2(beta0_grid2, beta1_grid2, beta2_grid2,
+                          beta3_grid2, adivinanza2)
+likelihood_grid2 = fill_likelihood_2(beta0_grid2, beta1_grid2, beta2_grid2,
+                                    beta3_grid2, [wavelength, fnu])
+post_grid2 = likelihood_grid2 * prior_grid2
+dx2 = 1.0 / 10
+dy2 = 3.0 / 10
+dj2 = 1.0 / 10
+dk2 = 6.0 / 10
+P_E2 = np.sum(post_grid2) * dx2 * dy2 * dj2 * dk2
+marg_A2_1 = (np.sum(np.sum(np.sum(post_grid2, axis=1), axis=1), axis=1) *
+              dy2 * dj2 * dk2 / P_E2)
+marg_sigma2_1 = (np.sum(np.sum(np.sum(post_grid2, axis=0), axis=1), axis=1) *
+              dx2 * dj2 * dk2 / P_E2)
+marg_A2_2 = (np.sum(np.sum(np.sum(post_grid2, axis=0), axis=0), axis=1) *
+              dx2 * dy2 * dk2 / P_E2)
+marg_sigma2_2 = (np.sum(np.sum(np.sum(post_grid2, axis=0), axis=0), axis=0) *
+              dx2 * dy2 * dj2 / P_E2)
+E_A2_1 = np.sum(beta0_grid2[:, 0, 0, 0] * marg_A2_1) * dx2
+E_sigma2_1 = np.sum(beta1_grid2[0, :, 0, 0] * marg_sigma2_1) * dy2
+E_A2_2 = np.sum(beta2_grid2[0, 0, :, 0] * marg_A2_2) * dj2
+E_sigma2_2 = np.sum(beta3_grid2[0, 0, 0, :] * marg_sigma2_2) * dk2
+print 'Segundo modelo: Gaussiana doble'
+print 'Amplitud 1               :', E_A2_1
+print 'sigma 1                  :', E_sigma2_1
+print ''
+print 'Amplitud 2               :', E_A2_2
+print 'sigma 2                  :', E_sigma2_2
+print ''
+print "Factor bayesiano:", P_E1/P_E2
 fig = plt.figure(1)
 fig.clf()
 plt.plot(wavelength,fnu,'o')
