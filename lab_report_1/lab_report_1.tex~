@@ -39,6 +39,7 @@
 \renewcommand\refname{Referencias}
 \def\mean#1{\left< #1 \right>}
 %\usepackage{times} % Uncomment to use the Times New Roman font
+\renewcommand{\vec}[1]{\mathbf{#1}}
 
 \usepackage{environ}
 \NewEnviron{myequation}{%
@@ -71,7 +72,7 @@ En el presente trabajo se estudian modelos orientados a describir una línea de 
 \begin{figure}[ht]
   \centering
   \includegraphics[scale = 0.55]{images/datos_originales.png}
-  \caption{Datos originales observados. El nivel del continuo y la longitud de onda central de la línea de absorción son conocidos, con valores $1\cdot 10^{-16} [\frac{erg}{s\ Hz\ cm^{-2}}]$ y $6563[\AA]$ respectivamente.}
+  \caption{Datos originales observados. El nivel del continuo y la longitud de onda central de la línea de absorción son conocidos, con valores $1 \cdot 10^{-16} [\frac{erg}{s\ Hz\ cm^{-2}}]$ y $6563[\AA]$ respectivamente.}
   \label{fig:datos_originales}
 \end{figure}
 
@@ -82,7 +83,7 @@ Para describir la línea se probarán dos modelos:
 \item Línea Gaussiana Simple: A partir de la curva se observa que puede resultar conveniente describirla asumiendo que es de forma Gaussiana. En la ecuación (\ref{ec:modelo_1}) se explicita el modelo propuesto. 
 
 \begin{myequation}
-f_1(\lambda; A, b) = C_0 - A e^{\frac{(\lambda - \lambda_0)^2}{2 b^2}}
+M_1(\lambda; A, b) = C_0 - A e^{\frac{-(\lambda - \lambda_0)^2}{2 b^2}}
 \label{ec:modelo_1}
 \end{myequation}
 
@@ -91,26 +92,56 @@ f_1(\lambda; A, b) = C_0 - A e^{\frac{(\lambda - \lambda_0)^2}{2 b^2}}
 \item Línea Gaussiana Doble: El modelo está explicitado en la ecuación (\ref{ec:modelo_2}). Se tienen los mismos parámetros conocidos $\lambda_0$ y $C_0$, pero en éste hay cuatro parámetros libres: $A_1$, $A_2$, $b_1$, $b_2$.
 
 \begin{myequation}
-f_2(\lambda; A_1, A_2, b_1, b_2) = C_0 - A_1 e^{\frac{(\lambda - \lambda_0)^2}{2 b_1^2}} - A_2 e^{\frac{(\lambda - \lambda_0)^2}{b_2^2}}
+M_2(\lambda; A_1, A_2, b_1, b_2) = C_0 - A_1 e^{\frac{-(\lambda - \lambda_0)^2}{2 b_1^2}} - A_2 e^{\frac{-(\lambda - \lambda_0)^2}{2 b_2^2}}
 \label{ec:modelo_2}
 \end{myequation}
+
 \end{enumerate}
 
 
 % MEJORAR AL FINAL
 Los objetivos son estimar el valor de cada parámetro con un intervalo de credibilidad del 68\%, usando métodos Bayesianos , y luego utilizar métodos de selección Bayesiana de modelos para decidir cuál de los dos propuestos representa mejor los datos.
 
+
+%%%------------------- METODOLOGIA -----------------------------%%%
 \section{Metodología}
 
-\subsection{Modelo 1: Línea Gaussiana Simple}
+Para obtener una estimación de los parámetros $\vec{\Theta}$ para cada modelo $M$, se utiliza la regla de Bayes (\ref{eq:bayes}) y los datos empíricos $\vec{x} = (\vec{\lambda}, \vec{F})$.
+
+\begin{myequation}
+  P(\Theta| \vec{x}, M) = \frac{P(\vec{x}|\Theta, M) P(\Theta| M)}{P(\vec{x}|M)}
+  \label{eq:bayes}
+\end{myequation}
+
+El término $P(\Theta| \vec{x}, M)$ indica la probabilidad a posteriori de que los parámetros representen a los datos $\vec{x}$ para el modelo $M$. Se calcula utilizando la distribución de probabilidad de la derecha, donde $P(\vec{x}|\Theta, M)$ es la verosimilitud, que mide la cercanía de los datos respecto a $M(\Theta)$. La probabilidad $P(\Theta| M)$ corresponde a la distribución a priori de los parámetros, la que se fija arbitrariamente. Finalmente, el término $P(\vec{x}|M)$ es difícil de calcular por lo que se utiliza como constante de normalización, de forma que (\ref{eq:bayes}) queda como (\ref{eq:bayes_2}).
+
+\begin{myequation}
+  P(\Theta| \vec{x}, M) = K \cdot P(\vec{x}|\Theta, M) P(\Theta| M)
+\label{eq:bayes_2}
+\end{myequation} 
+
+Para todos los casos se utiliza la función de verosimilitud (\ref{ec:verosimilitud}), donde $M$ representa el modelo a evaluar. El valor de $\sigma$ corresponde al error asociado a cada punto, el cual se estima usando la desviación estándar de los puntos lejanos a la línea de absorción sobre el continuo ($\approx$ error de medición).
+
+\begin{myequation}
+  P(\vec{x}|\Theta, M) = \frac{1}{(2 \pi \sigma^2)^{N/2}} e^{\frac{-1}{2 \sigma^2} \sum_{i=1}^N (F_i - M(\lambda_i, \Theta))^2 }
+  \label{ec:verosimilitud}
+\end{myequation}
+
+La probabilidad a priori de los parámetros de cada distribución dependerá de cada modelo y se detalla en las secciones \ref{sec:modelo1} y \ref{sec:modelo2}.
+% FALTA PONER COMO SE ESTIMAN LOS MEJORES PARAMETROS
+
+%%%---------------------- PARAMETROS PARA CADA MODELO ---------------------------%%%
+\subsection{Parámetros modelo 1: Línea Gaussiana Simple}
+\label{sec:modelo1}
 
 El modelo descrito por (\ref{ec:modelo_1}) posee dos parámetros libres, $A$ y $b$. Para utilizar técnicas Bayesianas de estimación es necesario definir una probabilidad a priori para el valor de cada parámetro. Dado que ambos valores están asociados a datos de un fenómeno continuo (mediciones físicas), serán modelados utilizando funciones Gaussianas.
 
 \subsubsection{Parámetro \emph{A}}
+
 A priori se decide que la distribución de $A$ es:
 
 \begin{myequation}
-P(A) = \frac{1}{\sqrt{2 \pi} \sigma_A} e^{\frac{(A - \bar A)^2}{2 \sigma_{A}^2}}
+P(A) = \frac{1}{\sqrt{2 \pi} \sigma_A} e^{\frac{-(A - \bar A)^2}{2 \sigma_{A}^2}}
 \label{ec:distr_A}
 \end{myequation}
 
@@ -119,141 +150,49 @@ Para determinar el valor de cada parámetro se debe tener en cuenta que A repres
 \begin{itemize}
 \item $\bar A$ será la amplitud máxima medida respecto al contínuo.
 
-\item $\sigma_A$ corresponderá al error de medición de Flujo. Este último se calculará usando el estimador de desviación estándar para los datos medidos sobre el continuo conocido.
+\item $\sigma_A$ corresponderá al error de medición de Flujo. Se utilizará el mismo valor que el $\sigma$ de la verosimilitud, ya que corresponde al mismo fenómeno.
 \end{itemize}
 
 \subsubsection{Parámetro \emph{b}}
 Análogamente, la distribución escogida para $b$ es:
 
 \begin{myequation}
-P(b) = \frac{1}{\sqrt{2 \pi} \sigma_b} e^{\frac{(b - \bar b)^2}{2 \sigma_{b}^2}}
+P(b) = \frac{1}{\sqrt{2 \pi} \sigma_b} e^{\frac{-(b - \bar b)^2}{2 \sigma_{b}^2}}
 \end{myequation}
 
 \begin{itemize}
-\item $\bar b = 0.8493(\lambda_0 - \lambda(\frac{\bar A}{2}))$
+\item $\bar b = 0.8493|\lambda_0 - \lambda(\frac{\bar A}{2})|$
 
 \item $\sigma_b = \frac{\Delta \lambda}{2}$ Se estima a partir de la resolución en longitud de onda (resolución horizontal) del modelo.
 \end{itemize}
 
-El valor de $\bar b$ se determina usando la aproximación \emph{Full Width at Half Maximum} (FWHM), donde $\lambda(\frac{\bar A}{2})$ es uno de los valores de longitud de onda en que la línea de absorción cae a la mitad en amplitud\footnote{ Se asume que la línea de absorción es aproximadamente simétrica.}.
+El valor de $\bar b$ se determina usando la aproximación \emph{Full Width at Half Maximum} (FWHM), donde $\lambda(\frac{\bar A}{2})$ es uno de los valores de longitud de onda en que la línea de absorción cae a la mitad en amplitud\footnote{Se asume que la línea de absorción es aproximadamente simétrica.}.
 
+\subsection{Parámetros modelo 2: Línea Gaussiana Doble}
+\label{sec:modelo2}
+En este caso la distribución de probabilidad de cada parámetro también será Gaussiana y de forma análoga a los de la Sección \ref{sec:modelo1}. Entonces, en resumen:
 
-\subsection{Conclusiones}
-
-Las regresiones muestran que para obtener datos de buena calidad es necesario tener muchas mediciones, o alternativamente, pocas mediciones de muy buena calidad. Se infiere de los resultados que los datos de las Supernovas son de mejor calidad que los de Cefeidas, ya que el valor de $H_0$ resultó mucho más cercano al aceptado y ambos disponían de una cantidad similar de datos. Esto último es razonable recordando que los datos de Supernovas se recolectaron casi cien años después, con todos los avances tecnológicos que ello conlleva.
-
-En cuanto al método de Bootstrap, en ambas simulaciones indicó que los valores estimados a partir de mediciones reales quedan fuera del intervalo de confianza, implicando que son muy improbables. Para el caso de las Supernovas sabemos que el valor es correcto, por lo que se debe estudiar con detención donde está el problema. Bootstrap presume que no hay correlación entre la medición de un punto y el siguiente. Este enfoque funciona bien al tener una muestra de comportamiento poco correlacionado, como por ejemplo encuestas. En este problema, hay una evidente correlación entre distancia y velocidad. Como el método de Bootstrap no la considera, genera valores de comportamiento diferente a la muestra original, entregando intervalos de confianza anómalos.
-
-\clearpage
-\section{Intervalos de confianza Ajuste Lineal}
-
-\subsection{Introducción}
-
-Se dispone de un set de datos obtenidos del catálogo de cuasares \emph{Data Release 9} del \emph{Sloan Digital Sky Survey (SDSS)}. El objetivo de esta Sección es encontrar la recta que mejor modela la relación entre el flujo de la banda i y la banza z, encontrando el intervalo de confianza al 95\% para sus parámetros. 
-
-Como el catálogo incluye valores del error para sus mediciones, se opta por utilizar una simulación de Monte Carlo con distribución de datos Gaussiana para encontrar el intervalo de confianza de los parámetros de la recta.
-
-\subsection{Desarrollo}
-
-Primero se observa la distribución de los datos para ver si efectivamente tienen tendencia lineal. En la Figura \ref{fig:datos_originales} se presentan los datos originales del catálogo, graficados uno vs el otro.
-
-
-De la Figura se desprende que la mayoría de los datos están agrupados, con unos pocos datos lejos del grupo. Se podría implementar un filtro para eliminarlos del espacio muestral, pero como se desea estudiar el intervalo de confianza real se mantendrán durante el procesamiento.
-
-\begin{figure}[ht]
-  \centering
-  \includegraphics[scale=0.5]{images/datos_fit.png}
-  \caption{Ajuste de los datos. Se ha realizado un zoom a la zona con mayor concentración de mediciones pero no se han eliminado datos del espacio muestral original.}
-  \label{fig:datos_fit}
-\end{figure}
-
-Los parámetros encontrados para el ajuste $ banda_z(x) = a \cdot banda_i + b$ son $a = 0.03 \cdot 10^{-6}[Jy]$ y $b=2.57$. La regresión lineal se realizó usando la herramienta \emph{polyfit} de \emph{numpy}. Los valores obtenidos usando el método de Monte Carlo se presentan en la Tabla \ref{tab:montecarlo}.
-
-\begin{table}[ht]
-  \centering
-  \begin{tabular}{|c|c|c|}
-    \hline
-    Variable & Min. Valor & Max. Valor \\
-    \hline
-    a [$10^{-6}Jy$] & 1.65 & 3.28\\
-    \hline
-    b & -0.005 & 0.067\\
-    \hline 
-  \end{tabular}
-  \caption{Intervalos de confianza al 95\% para parámetros del ajuste lineal. Estimados con simulación de Monte Carlo de $10^4$ espacios muestrales, usando distribución Gaussiana con error conocido para la generación de datos.}
-  \label{tab:montecarlo}
-\end{table}
-
-\section{Conclusiones}
-En esta ocasión la estimación de los intervalos de confianza resultó ser más razonable que en el caso de la Constante de Hubble. El motivo por el que ello ocurre es que el método de Montecarlo preserva gran parte de la correlación entre los datos, ya que las muestras son creadas generando variaciones en torno a los valores originales. Aún más, como las variaciones en este caso son Gaussianas, su media es cero por lo que para una gran cantidad de simulaciones se espera que su valor medio coindica con el ajuste lineal de las mediciones. Al comparar los parámetros con sus intervalos de confianza se observa que efectivamente ocurre éste fenómeno, cayendo cerca de su centro.
-
-Se puede observar el efecto de los datos alejados en el intervalo de confianza de $b$, el cual casi se duplica desde el mínimo al máximo valor. Esto sugiere que se puede utilizar el ancho del intervalo como un indicador de lo preciso que es un ajuste a un determinado set de datos, como alternativa o complemento de $\chi ^2$.
-
-\clearpage
-\section{Apéndice}
-
-\subsection{Regresión Lineal a través del Origen}
-\label{sec:regresion}
-
-Si el modelo es de la forma (\ref{eq:modelo_origen}), con $x$ e $y$ series de datos conocidos, se puede usar una regresión lineal a través del origen para estimar el valor del parámetro $b$.
-
-\begin{equation}
- y = b\cdot x
- \label{eq:modelo_origen}
-\end{equation}
-
-Para ello se busca el valor de $b$ que minimiza el error cuadrático medio $\chi^2$ (\ref{eq:chi2}).
-
-\begin{equation}
-  \chi^2(b) = \sum_{i=1}^{N} (y_i - b x_i) ^ 2
-  \label{eq:chi2}
-\end{equation}
-
-Minimización de $\chi^2$:
-
-\begin{equation}
-  0 = \dfrac{d \chi^2}{d b} = - 2 \sum_{i=1}^{N} (y_i - b x_i)x_i
-  \label{eq:minimizacion}
-\end{equation}
-
-Por comodidad se define:
-
-
-$$S_{xy} = \sum_{i=1}^{N} y_i x_i$$
-
-$$S_{xx} = \sum_{i=1}^{N} x_i ^ 2$$
-
-Así, (\ref{eq:minimizacion}) se reduce a:
-
-\begin{equation}
-  \hat{b} = \dfrac{S_{xy}}{S_{xx}}
-\end{equation} 
-
-Con $\hat{b}$ un estimador de $b$. Se debe mencionar que esta técnica puede poseer un error asociado mayor que una regresión lineal simple, pues elimina un grado de libertad en el ajuste. También existe debate sobre las situaciones en que se puede usar. Para más información se puede consultar el documento Regression through the Origin\footnote{Joseph G. Eisenhauer, \emph{Regression through the Origin}. Canisius College, Buffalo, USA.}, donde se presenta una discusión del método y sus características.
-
-\clearpage
-\subsection{Método de Bootstrap}
-\label{sec:bootstrap}
-
-Esta técnica se utiliza cuando la distribución de probababilidad de los datos es desconocida y la cantidad de datos no alcanza para hacer supuestos. Su ventaja es que permite ampliar el espacio muestral de un fenómeno a partir de pocas mediciones. Consiste en crear muchos sets de datos simulados a partir de un muestreo con reposición de los datos originales. Cada muestreo simulado debe tener la misma cantidad de datos que el set inicial. Luego se calculan los parámetros de interés con los datos simulados y se determina su intervalo de confianza.
-
-\subsubsection*{Ejemplo}
-Supongamos que se tiene el set [1 , 3 , 2], y el parámetro de interés es la media. Los siguientes serían datos simulados para este set:
-
-\begin{center}
-  [1, 1, 3]
-
-  [2, 2, 2]
-
-  [3, 2, 2]
-
-  [2, 1, 3]
-
-  [3, 2, 3]
-
-\end{center}
+Para las variables $A_1$ y $A_2$:
+\begin{itemize}
+  \item $\bar{A_1} = \bar{A_2} = \frac{\bar{A}}{2}$ La altura media de la línea de absorción debe ser $\approx \bar{A}$ al sumar las exponenciales.
   
+  \item $\sigma_{A_1} = \sigma_{A_2} = \frac{\sigma_A}{2}$ El error en $F$ recibe el mismo escalamiento que $A_1$, $A_2$.
+\end{itemize}
 
-El set original tiene media 2, y los cinco sets simulados tienen medias 1.6, 2, 2.3, 2, 2.7. Un intervalo de confianza de $x\%$ es aquel en que caen el $x\%$ de las muestras. Así, la media en este ejemplo estaría entre 2 y 2.3 con un intervalo de confianza del 60\%.
+Y para $b_1$, $b_2$:
+
+\begin{itemize}
+  \item $\bar{b_1} = \bar{b_2} = \bar{b}$ El ancho de la curva se mantiene igual.
+  
+  \item $\sigma_{b_1} = \sigma_{b_2} = \sigma_b$ El error proviene del mismo fenómeno (es igual).
+\end{itemize}
+
+\section{Implementación y Resultados}
+
+Para operar con los datos en un rango razonable, y evitar \emph{overflows} numéricos o divisiones por cero, se escalan los valores del espectro multiplicándolo por $2.5 \cdot 10^{18}$. Así, el vector de datos queda: $\vec{x} = (\vec{\lambda}, \vec{F^*})$, con $\vec{F^*} = 2.5 \cdot 10^{18} \vec{F}$. 
+
+\subsection{Modelo 1: Línea Gaussiana Simple}
+
+
 
 \end{document}

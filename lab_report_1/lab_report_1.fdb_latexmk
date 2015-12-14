@@ -1,7 +1,7 @@
 # Fdb version 3
-["pdflatex"] 1450072397 "lab_report_1.tex" "lab_report_1.pdf" "lab_report_1" 1450072460
+["pdflatex"] 1450101585 "lab_report_1.tex" "lab_report_1.pdf" "lab_report_1" 1450101586
   "./images/datos_originales.png" 1450038373 36201 c6051f50357dbc580cb8263cf09664b9 ""
-  "./lab_report_1.out" 1450072397 589 c6b2ddfc2f9811dfdc5d1a0df7b7f2bc ""
+  "./lab_report_1.out" 1450101586 589 c6b2ddfc2f9811dfdc5d1a0df7b7f2bc ""
   "/usr/share/texlive/texmf-dist/fonts/map/fontname/texfonts.map" 1272929888 3287 e6b82fe08f5336d4d5ebc73fb1152e87 ""
   "/usr/share/texlive/texmf-dist/fonts/map/pdftex/updmap/pdftex.map" 1396833912 1422999 120086736902aeebe94d194ffde31e04 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex7.tfm" 1246382020 1004 54797486969f23fa377b128694d548df ""
@@ -136,11 +136,11 @@
   "/usr/share/texlive/texmf-dist/web2c/texmf.cnf" 1448913523 31706 2a503b7efdd7b21ad15142403eed2b9b ""
   "/usr/share/texlive/texmf-var/web2c/pdftex/pdflatex.fmt" 1449960398 3484758 a8e6261e1646fd2fb41d3577cf44f665 ""
   "images/datos_originales.png" 1450038373 36201 c6051f50357dbc580cb8263cf09664b9 ""
-  "lab_report_1.aux" 1450072397 2781 ed5c8e689d30054944f33b0fa2765a73 ""
-  "lab_report_1.out" 1450072397 589 c6b2ddfc2f9811dfdc5d1a0df7b7f2bc ""
-  "lab_report_1.tex" 1450072388 9504 dc471967016b91e5a8f64b345ffa943c ""
+  "lab_report_1.aux" 1450101586 2781 ed5c8e689d30054944f33b0fa2765a73 ""
+  "lab_report_1.out" 1450101586 589 c6b2ddfc2f9811dfdc5d1a0df7b7f2bc ""
+  "lab_report_1.tex" 1450101584 9504 dc471967016b91e5a8f64b345ffa943c ""
   (generated)
+  "lab_report_1.log"
   "lab_report_1.pdf"
   "lab_report_1.aux"
-  "lab_report_1.log"
   "lab_report_1.out"

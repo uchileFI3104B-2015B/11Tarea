@@ -14,6 +14,8 @@ class modelo1(object):
     K = 1.0  # Cte. de normalizacion
     C_0 = []
     lambda_0 = []
+    full_A = []  # Almacena valores de A malla
+    full_b = []  # Almacena valores de b malla
 
     def __init__ (self, var_data, mean_A, std_A, mean_b, std_b, C_0, lambda_0):
         ''' Inicia los parametros de las distribuciones a priori'''
@@ -25,6 +27,15 @@ class modelo1(object):
         self.std_b = std_b
         self.C_0 = C_0
         self.lambda_0 = lambda_0
+
+        min_A = 0.0
+        max_A = mean_A * 2.0
+        min_b = mean_b / 5.0
+        max_b = mean_b * 5.0
+
+        '''Divide el espacio de cada parametro en 500'''
+        self.full_A = np.linspace(min_A, max_A, 500)
+        self.full_b = np.linspace(min_b, max_b, 500)
     # END of __init__
 
     def prob_A (self, A):
@@ -67,23 +78,14 @@ class modelo1(object):
     def normalizar (self, x, y):
 
         ''' Se calcula el area total de la distribucion a posteriori
-        Para ello se divide el espacio de cada parametro en 40
-        y se usan los datos reales
         Retorna la constante de normalizacion K'''
 
-        min_A = 0.0
-        max_A = self.mean_A * 2.0
-        min_b = self.mean_b / 5.0
-        max_b = self.mean_b * 5.0
-
-        A = np.linspace(min_A, max_A, 100)
-        b = np.linspace(min_b, max_b, 100)
-        delta_A = A[1] - A[0]
-        delta_b = b[1] - b[0]
+        delta_A = self.full_A[1] - self.full_A[0]
+        delta_b = self.full_b[1] - self.full_b[0]
 
         K = 0.0
-        for el_A in A:
-            for el_b in b:
+        for el_A in self.full_A:
+            for el_b in self.full_b:
                 # aux = self.prob_sin_norm(x, y, el_a, el_b)
                 aux = self.verosimilitud(x, y, el_A, el_b)
                 # print(aux)
@@ -94,10 +96,29 @@ class modelo1(object):
         return self.K
     # END of normalizar
 
-    def prob_a_posteriori (self, x, y, A, b):
+    def prob_posteriori (self, x, y, A, b):
         ''' Probabilidad a posteriori de que parametros
         A, b se correspondan con los datos '''
         return self.prob_sin_norm(x, y, A, b) / self.K
+
+    def prob_posteriori_A (self, x, y, A):
+        delta_b = self.full_b[1] - self.full_b[0]
+
+        suma = 0.0
+        for el_b in self.full_b:
+            suma += self.prob_posteriori(x, y, A, el_b) * delta_b
+
+        return suma
+        ''' Retorna funcion de probabilidad de A '''
+
+    def prob_posteriori_b (self, x, y, b):
+        delta_A = self.full_A[1] - self.full_A[0]
+
+        suma = 0.0
+        for el_A in self.full_A:
+            suma += self.prob_posteriori(x, y, el_A, b)
+
+        return suma
 
 def make_modelo1(var_data, mean_A, std_A, mean_b, std_b, C_0, lambda_0):
 
