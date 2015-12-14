@@ -5,6 +5,7 @@ import scipy.stats
 import pymc3 as pm
 from theano import function, shared
 import theano.tensor as tt
+from IPython.display import Image
 
 
 #funciones estructurales
@@ -17,7 +18,7 @@ def leer_archivo(nombre):
     datos = np.loadtxt(nombre)
     x = datos[:, 0]
     y = datos[:, 1]
-    return x, y
+    return [x, y]
 
 
 def gauss(mu, sigma, x):
@@ -61,7 +62,7 @@ def gauss2d(x, y, mat_sigma, ):
 
 
 # main
-x_sample, y_sample = leer_archivo('espectro.dat')
+[x_sample, y_sample] = leer_archivo('espectro.dat')
 # inicializacion
 A1 = 1e-17
 A2 = 1e-17 / 2
@@ -77,15 +78,15 @@ with pm.Model() as basic_model:
     beta2 = pm.Normal('beta2', mu=A2, sd=1)
     beta3 = pm.Normal('beta3', mu=sigma2, sd=1)
     # valor esperado
-    #y_out = modelo_2(p1, x_sample)
+    y_out = modelo_2(p1, x_sample)
     #y_out = tt.as_tensor_variable(10 ** (- 16)) - tt.as_tensor_variable(beta0) * pm.Normal('a', mu=6563, sd=beta1) - tt.as_tensor_variable(beta2) * pm.Normal('b', mu=6563, sd=beta2)
-    y_out = tt.as_tensor_variable(10 ** (- 16) - beta0 * tt.exp(tt.as_tensor_variable(- (x_sample - 6563) ** 2 / (2 * beta1 ** 2))) - beta2 * tt.exp(tt.as_tensor_variable(- (x_sample - 6563) ** 2 / (2 * beta3 ** 2))))
+    #y_out = tt.as_tensor_variable(10 ** (- 16) - beta0 * tt.exp(tt.as_tensor_variable(- (x_sample - 6563) ** 2 / (2 * beta1 ** 2))) - beta2 * tt.exp(tt.as_tensor_variable(- (x_sample - 6563) ** 2 / (2 * beta3 ** 2))))
     #y_out = modelo_doble(beta0, beta1, beta2, beta3, x_sample)
     #y_out = a - beta0 * gauss(mu, beta1, x_sample) - beta2 * gauss(mu, beta3, x_sample)
     # likelihood
     Y_obs = pm.Normal('Y_obs', mu=y_out, sd=1.5, observed=y_sample)
     map_estimate = pm.find_MAP(model=basic_model)
-    print map_estimate
+    print (map_estimate)
 '''
 with basic_model:
     trace = pm.sample(5000, start=map_estimate)

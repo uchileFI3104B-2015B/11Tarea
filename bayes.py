@@ -2,6 +2,8 @@ from __future__ import division
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats
+from IPython.display import Image
+from scipy.optimize import leastsq
 
 plt.style.use('bmh')
 plt.rcParams['xtick.labelsize'] = 'large'
@@ -22,7 +24,7 @@ def leer_archivo(nombre):
 
 def modelo_1(p, x):
     A, sigma = p
-    a = 10 ** (- 16)
+    a = 10 ** (- 1)
     mu = 6563
     y = a - A * scipy.stats.norm(loc=mu, scale=sigma).pdf(x)
     return y
@@ -30,13 +32,13 @@ def modelo_1(p, x):
 
 def modelo_2(p, x):
     A1, sigma1, A2, sigma2 = p
-    a = 10 ** (- 16)
+    a = 10 ** (- 1)
     mu = 6563
     y = a - A1 * scipy.stats.norm(loc=mu, scale=sigma1).pdf(x) - A2 * scipy.stats.norm(loc=mu, scale=sigma2).pdf(x)
     return y
 
 
-def gauss2d(x, y, mat_sigma, ):
+def gauss2d(x, y, mat_sigma):
     sigma_x, sigma_y, rho = mat_sigma
     A = 1 / (2 * np.pi * sigma_x * sigma_y * np.sqrt(1 - rho ** 2))
     B = (- 1 / (2 * (2 - rho ** 2))) * ((x / sigma_x) ** 2 + (y / sigma_y) ** 2
@@ -93,7 +95,7 @@ def likelihood(beta, datos, error, model=2):
         L = (2 * np.pi * error ** 2) ** (-N / 2.) * np.exp(- s / (2 * error ** 2))
     elif model == 1:
         s = np.sum(y - modelo_1(beta, x))
-        L = (4 * np.pi ** 2 * error ** 4) ** (-N / 2) * np.exp(-s / (2 * error ** 2))
+        L = (2 * np.pi * error ** 2) ** (-N / 2) * np.exp(-s / (2 * error ** 2))
     return L
 
 
@@ -151,6 +153,7 @@ def make_figure_axes(x, y, fig_number=1, fig_size=8):
                   0.65, 0.18 * fig_size_x / fig_size_y]
         rect_y = [0.79, 0.12 * fig_size_x / fig_size_y,
                   0.18, 0.65 * fig_size_x * min_size / max_size / fig_size_y]
+
     else:
         fig_size_y = fig_size
         fig_size_x = (0.12 * fig_size_y +
@@ -170,7 +173,6 @@ def make_figure_axes(x, y, fig_number=1, fig_size=8):
 
     fig = plt.figure(fig_number, figsize=(fig_size_x, fig_size_y))
     fig.clf()
-
     ax_main = fig.add_axes(rect_main)
     ax_marginal_x = fig.add_axes(rect_x, xticklabels=[])
     ax_marginal_y = fig.add_axes(rect_y, yticklabels=[])
@@ -178,7 +180,7 @@ def make_figure_axes(x, y, fig_number=1, fig_size=8):
     return ax_main, ax_marginal_x, ax_marginal_y
 
 
-def plot_distribution(x, y, z, cmap='viridis'):
+def plot_distribution(x, y, z, cmap='PuBu_r'):
     x_limits = (x.min(), x.max())
     y_limits = (y.min(), y.max())
 
@@ -186,7 +188,7 @@ def plot_distribution(x, y, z, cmap='viridis'):
     ax_main.pcolormesh(x, y, z, cmap=cmap)
 
     marginal_x = np.sum(z, axis=1)
-    ax_marginal_x.plot(x[:,0], marginal_x)
+    ax_marginal_x.plot(x[:, 0], marginal_x)
     [l.set_rotation(-90) for l in ax_marginal_y.get_xticklabels()]
 
     marginal_y = np.sum(z, axis=0)
@@ -197,24 +199,78 @@ def plot_distribution(x, y, z, cmap='viridis'):
 
     ax_marginal_x.set_xlim(x_limits)
     ax_marginal_y.set_ylim(y_limits)
-    plt.show()
     return ax_main, ax_marginal_x, ax_marginal_y
 
 
+def marginal1(grid, dx, dy):
+    P_E = np.sum(grid) * dx * dy
+    A = np.sum(grid, axis=1) * dy / P_E
+    std = np.sum(grid, axis=1) * dx / P_E
+    return A, std
+
+
+def evidencia1(grid, dx, dy):
+    P_E = np.sum(grid) * dx * dy
+    A = np.sum(grid, axis=1) * dx / P_E
+    std = np.sum(grid, axis=1) * dy / P_E
+    E_A = np.sum(grid[:, 0] * A) * dx
+    E_std = np.sum(grid[0, :] * std) * dy
+    return A, std, E_A, E_std, P_E
+
+
+def residuo_1(p, x_exp, y_exp):
+    er = y_exp - modelo_1(p, x_exp)
+    return er
+
+
+def err(x_exp, y_exp, p0):
+    aprox = leastsq(residuo_1, p0, args=(x_exp, y_exp))
+    return aprox
+
+
+def evidencia2(grid, dx2, dy2, dx3, dy3):
+    P_E = np.sum(grid) * dx2 * dy2 * dx3 * dy3
+    A_1 = (np.sum(np.sum(np.sum(grid, axis=1), axis=1), axis=1) * dy2 * dx3 * dy3 / P_E)
+    std_1 = (np.sum(np.sum(np.sum(grid, axis=1), axis=1), axis=1) * dx2 * dx3 * dy3 / P_E)
+    A_2 = (np.sum(np.sum(np.sum(grid, axis=1), axis=1), axis=1) * dx2 * dy2 * dy3 / P_E)
+    std_2 = (np.sum(np.sum(np.sum(grid, axis=1), axis=1), axis=1) * dx2 * dy2 * dx3 / P_E)
+    E_A_1 = np.sum(grid[:, 0, 0, 0] * A_1) * dx2
+    E_std_1 = np.sum(grid[:, 0, 0, 0] * std_1) * dy2
+    E_A_2 = np.sum(grid[:, 0, 0, 0] * A_2) * dx3
+    E_std_2 = np.sum(grid[:, 0, 0, 0] * std_2) * dy3
+    return A_1, std_1, A_2, std_2, E_A_1, E_std_1, E_A_2, E_std_2, P_E
+
+
 # main
-adivinanza1 = 1e-17, 10.
-adivinanza2 = 1e-17, 1e-17 / 2., 10., 10.
 x, y = leer_archivo('espectro.dat')
-datos = (x, y)
+datos = (x, y * 10 ** 15)
+# modelo 1
+x_exp = x
+y_exp = y * 10 ** 15
+p0 = (-70., 5.)
+e = err(x_exp, y_exp, p0)
+print (e)
 error = 1
-beta_grid1 = np.mgrid[1e-17 / 2.:2 * 1e-17:10j, 5:15:10j]
+beta_grid1 = np.mgrid[-100.:-40.:50j, 2.:10.:50j]
 beta0_grid, beta1_grid = beta_grid1
-ad1 = [1e-17, 1e-16, 10, 10]
+ad1 = [-70., 5., 7, 4]
 a = fill_prior(beta_grid1, ad1, 1)
 b = fill_likelihood(beta_grid1, datos, error, 1)
-beta_grid2 = np.mgrid[1e-17 / 2.:2 * 1e-17:10j, 5:15:10j, 1e-17 / 4.:1e-17:10j, 5:15:10j]
-ad2 = [1e-17, 1e-16, 10, 10, 1e-17 / 2, 1e-16, 10, 10]
-c = fill_prior(beta_grid2, ad2, 2)
-d = fill_likelihood(beta_grid2, datos, error, 2)
-plot_distribution(beta0_grid, beta1_grid, a * b)
+c = a * b
+dx1 = 60. / 50.
+dy1 = 8. / 50.
+marginal_A, marg_std, E_A, E_std, P_E_1 = evidencia1(c, dx1, dy1)
+plot_distribution(beta0_grid, beta1_grid, c)
 plt.show()
+# modelo 2
+beta_grid2 = np.mgrid[-80:-20:50j, 2:20:50j, -60:-5:50j, 2:25:50j]
+ad2 = [50, 40, 10, 15, 30, 30, 10, 10]
+d = fill_prior(beta_grid2, ad2, 2)
+e = fill_likelihood(beta_grid2, datos, error, 2)
+f = d * e
+dx2 = 60. / 50.
+dy2 = 18. / 50.
+dx3 = 55. / 50.
+dy3 = 23. / 50.
+marginal_A_1, marg_std_1, marginal_A_2, marg_std_2, E_A_1, E_std_1, E_A_2, E_std_2, P_E_2 = evidencia2(f, dx2, dy2, dx3, dy3)
+print (P_E_1 / P_E_2)
