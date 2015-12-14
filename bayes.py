@@ -34,19 +34,17 @@ def modelo_2(p, x):
     A1, sigma1, A2, sigma2 = p
     a = 10 ** (- 1)
     mu = 6563
-    y = a - A1 * scipy.stats.norm(loc=mu, scale=sigma1).pdf(x) - A2 * scipy.stats.norm(loc=mu, scale=sigma2).pdf(x)
+    B1 = scipy.stats.norm(loc=mu, scale=sigma1).pdf(x)
+    B2 = scipy.stats.norm(loc=mu, scale=sigma2).pdf(x)
+    y = a - A1 * B1 - A2 * B2
     return y
 
 
-def gauss2d(x, y, mat_sigma):
-    sigma_x, sigma_y, rho = mat_sigma
-    A = 1 / (2 * np.pi * sigma_x * sigma_y * np.sqrt(1 - rho ** 2))
-    B = (- 1 / (2 * (2 - rho ** 2))) * ((x / sigma_x) ** 2 + (y / sigma_y) ** 2
-                                        - 2 * rho * x * y / (sigma_x * sigma_y))
-    return A * np.exp(B)
-
-
 def prior(beta, p, model=2):
+    '''
+    probabilidad a priori que se le da a la adivinanza inicial. se aborda en
+    una misma funcion los dos modelos
+    '''
     if model == 2:
         beta0, beta1, beta2, beta3 = beta
         a0, a1, a2, a3, b0, b1, b2, b3 = p
@@ -68,6 +66,10 @@ def prior(beta, p, model=2):
 
 
 def fill_prior(beta_grid, prior_p, model=2):
+    '''
+    rellena la grilla para la prob a priori. tambien abarca los dos modelos al
+    mismo tiempo
+    '''
     if model == 2:
         beta0_grid, beta1_grid, beta2_grid, beta3_grid = beta_grid
         salida = np.zeros(beta0_grid.shape)
@@ -76,57 +78,68 @@ def fill_prior(beta_grid, prior_p, model=2):
             for j in range(nj):
                 for k in range(nk):
                     for l in range(nl):
-                        salida[i, j, k, l] = prior([beta0_grid[i, j, k, l], beta1_grid[i,j, k, l], beta2_grid[i, j, k, l], beta3_grid[i,j, k, l]], prior_p, 2)
+                        salida[i, j, k, l] = prior([beta0_grid[i, j, k, l],
+                                                    beta1_grid[i, j, k, l],
+                                                    beta2_grid[i, j, k, l],
+                                                    beta3_grid[i, j, k, l]],
+                                                   prior_p, 2)
     elif model == 1:
         beta0_grid, beta1_grid = beta_grid
         salida = np.zeros(beta0_grid.shape)
         ni, nj = beta0_grid.shape
         for i in range(ni):
             for j in range(nj):
-                salida[i, j] = prior([beta0_grid[i, j], beta1_grid[i,j]], prior_p, 1)
+                salida[i, j] = prior([beta0_grid[i, j], beta1_grid[i, j]],
+                                     prior_p, 1)
     return salida
 
 
 def likelihood(beta, datos, error, model=2):
+    '''
+    verosimilitud. se aborda en una misma funcion los dos modelos
+    '''
     x, y = datos
     N = len(x)
     if model == 2:
         s = np.sum(y - modelo_2(beta, x))
-        L = (2 * np.pi * error ** 2) ** (-N / 2.) * np.exp(- s / (2 * error ** 2))
+        L = (2 * np.pi * error ** 2) ** (-N / 2.) * np.exp(- s /
+                                                           (2 * error ** 2))
     elif model == 1:
         s = np.sum(y - modelo_1(beta, x))
-        L = (2 * np.pi * error ** 2) ** (-N / 2) * np.exp(-s / (2 * error ** 2))
+        L = (2 * np.pi * error ** 2) ** (-N / 2) * np.exp(-s /
+                                                          (2 * error ** 2))
     return L
 
 
 def fill_likelihood(beta_grid, datos, error, model=2):
+    '''
+    rellena la grilla para verosimilitud de los parametros.
+    '''
     if model == 2:
         beta0_grid, beta1_grid, beta2_grid, beta3_grid = beta_grid
-        salida = np.zeros(beta0_grid.shape)
+        sal = np.zeros(beta0_grid.shape)
         ni, nj, nk, nl = beta0_grid.shape
         for i in range(ni):
             for j in range(nj):
                 for k in range(nk):
                     for l in range(nl):
-                        salida[i, j, k, l] = likelihood([beta0_grid[i, j, k, l], beta1_grid[i,j, k, l], beta2_grid[i, j, k, l], beta3_grid[i,j, k, l]], datos, error, 2)
+                        sal[i, j, k, l] = likelihood([beta0_grid[i, j, k, l],
+                                                      beta1_grid[i, j, k, l],
+                                                      beta2_grid[i, j, k, l],
+                                                      beta3_grid[i, j, k, l]],
+                                                     datos, error, 2)
     elif model == 1:
         beta0_grid, beta1_grid = beta_grid
-        salida = np.zeros(beta0_grid.shape)
+        sal = np.zeros(beta0_grid.shape)
         ni, nj = beta0_grid.shape
         for i in range(ni):
             for j in range(nj):
-                salida[i, j] = likelihood([beta0_grid[i, j], beta1_grid[i,j]], datos, error, 1)
-    return salida
+                sal[i, j] = likelihood([beta0_grid[i, j], beta1_grid[i, j]],
+                                       datos, error, 1)
+    return sal
 
 
-def chi_cuad(f, x, y, p):
-    n = len(x)
-    chi = 0
-    for i in range(n):
-        chi = chi + (y[i] - f(x[i], p))
-    return chi
-
-
+# funciones para graficar de los demos
 def make_figure_axes(x, y, fig_number=1, fig_size=8):
     '''
     Creates a set of 3 axes to plot 2D function + marginals
@@ -200,9 +213,14 @@ def plot_distribution(x, y, z, cmap='PuBu_r'):
     ax_marginal_x.set_xlim(x_limits)
     ax_marginal_y.set_ylim(y_limits)
     return ax_main, ax_marginal_x, ax_marginal_y
+# fin de las funciones del demo de la clase
 
 
 def marginal1(grid, dx, dy):
+    '''
+    calcula la prob marginal de la grilla para el caso del modelo 1 (con las
+    correspondientes dimensiones de la grilla)
+    '''
     P_E = np.sum(grid) * dx * dy
     A = np.sum(grid, axis=1) * dy / P_E
     std = np.sum(grid, axis=1) * dx / P_E
@@ -210,6 +228,9 @@ def marginal1(grid, dx, dy):
 
 
 def evidencia1(grid, dx, dy):
+    '''
+    calcula la prob marginal y la evidencia para el modelo 1
+    '''
     P_E = np.sum(grid) * dx * dy
     A = np.sum(grid, axis=1) * dx / P_E
     std = np.sum(grid, axis=1) * dy / P_E
@@ -218,27 +239,45 @@ def evidencia1(grid, dx, dy):
     return A, std, E_A, E_std, P_E
 
 
-def residuo_1(p, x_exp, y_exp):
-    er = y_exp - modelo_1(p, x_exp)
-    return er
-
-
-def err(x_exp, y_exp, p0):
-    aprox = leastsq(residuo_1, p0, args=(x_exp, y_exp))
-    return aprox
-
-
 def evidencia2(grid, dx2, dy2, dx3, dy3):
+    '''
+    calcula la prob marginal y la evidencia para el modelo 2
+    '''
     P_E = np.sum(grid) * dx2 * dy2 * dx3 * dy3
-    A_1 = (np.sum(np.sum(np.sum(grid, axis=1), axis=1), axis=1) * dy2 * dx3 * dy3 / P_E)
-    std_1 = (np.sum(np.sum(np.sum(grid, axis=1), axis=1), axis=1) * dx2 * dx3 * dy3 / P_E)
-    A_2 = (np.sum(np.sum(np.sum(grid, axis=1), axis=1), axis=1) * dx2 * dy2 * dy3 / P_E)
-    std_2 = (np.sum(np.sum(np.sum(grid, axis=1), axis=1), axis=1) * dx2 * dy2 * dx3 / P_E)
+    A_1 = (np.sum(np.sum(np.sum(grid, axis=1),
+                         axis=1), axis=1) * dy2 * dx3 * dy3 / P_E)
+    std_1 = (np.sum(np.sum(np.sum(grid, axis=1),
+                           axis=1), axis=1) * dx2 * dx3 * dy3 / P_E)
+    A_2 = (np.sum(np.sum(np.sum(grid, axis=1),
+                         axis=1), axis=1) * dx2 * dy2 * dy3 / P_E)
+    std_2 = (np.sum(np.sum(np.sum(grid, axis=1),
+                    axis=1), axis=1) * dx2 * dy2 * dx3 / P_E)
     E_A_1 = np.sum(grid[:, 0, 0, 0] * A_1) * dx2
     E_std_1 = np.sum(grid[:, 0, 0, 0] * std_1) * dy2
     E_A_2 = np.sum(grid[:, 0, 0, 0] * A_2) * dx3
     E_std_2 = np.sum(grid[:, 0, 0, 0] * std_2) * dy3
     return A_1, std_1, A_2, std_2, E_A_1, E_std_1, E_A_2, E_std_2, P_E
+
+
+# calculo de los parametros via leastsq
+def residuo_1(p, x_exp, y_exp):
+    er = y_exp - modelo_1(p, x_exp)
+    return er
+
+
+def residuo_2(p, x_exp, y_exp):
+    er = y_exp - modelo_2(p, x_exp)
+    return er
+
+
+def err1(x_exp, y_exp, p0):
+    aprox = leastsq(residuo_1, p0, args=(x_exp, y_exp))
+    return aprox
+
+
+def err2(x_exp, y_exp, p0):
+    aprox = leastsq(residuo_2, p0, args=(x_exp, y_exp))
+    return aprox
 
 
 # main
@@ -248,8 +287,11 @@ datos = (x, y * 10 ** 15)
 x_exp = x
 y_exp = y * 10 ** 15
 p0 = (-70., 5.)
-e = err(x_exp, y_exp, p0)
-print (e)
+p1 = (10., 10., 5., 5.)
+e1 = err1(x_exp, y_exp, p0)
+e2 = err2(x_exp, y_exp, p1)
+print(e1)
+print(e2)
 error = 1
 beta_grid1 = np.mgrid[-100.:-40.:50j, 2.:10.:50j]
 beta0_grid, beta1_grid = beta_grid1
@@ -259,9 +301,11 @@ b = fill_likelihood(beta_grid1, datos, error, 1)
 c = a * b
 dx1 = 60. / 50.
 dy1 = 8. / 50.
-marginal_A, marg_std, E_A, E_std, P_E_1 = evidencia1(c, dx1, dy1)
+marg_A, marg_std, E_A, E_std, P_E_1 = evidencia1(c, dx1, dy1)
 plot_distribution(beta0_grid, beta1_grid, c)
 plt.show()
+print(E_A)
+print(P_E_1)
 # modelo 2
 beta_grid2 = np.mgrid[-80:-20:50j, 2:20:50j, -60:-5:50j, 2:25:50j]
 ad2 = [50, 40, 10, 15, 30, 30, 10, 10]
@@ -272,5 +316,8 @@ dx2 = 60. / 50.
 dy2 = 18. / 50.
 dx3 = 55. / 50.
 dy3 = 23. / 50.
-marginal_A_1, marg_std_1, marginal_A_2, marg_std_2, E_A_1, E_std_1, E_A_2, E_std_2, P_E_2 = evidencia2(f, dx2, dy2, dx3, dy3)
-print (P_E_1 / P_E_2)
+a1, a2, a3, a4, a5, a6, a7, a8, a9 = evidencia2(f, dx2, dy2, dx3, dy3)
+marg_A_1, marg_std_1, marginal_A_2, marg_std_2 = a1, a2, a3, a4
+E_A_1, E_std_1, E_A_2, E_std_2, P_E_2 = a5, a6, a7, a8, a9
+print(E_A_1, E_std_1, E_A_2, E_std_2, P_E_2)
+print(P_E_1 / P_E_2)
