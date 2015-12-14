@@ -71,7 +71,7 @@ En el presente trabajo se estudian modelos orientados a describir una línea de 
 
 \begin{figure}[ht]
   \centering
-  \includegraphics[scale = 0.55]{images/datos_originales.png}
+  \includegraphics[scale = 0.5]{images/datos_originales.png}
   \caption{Datos originales observados. El nivel del continuo y la longitud de onda central de la línea de absorción son conocidos, con valores $1 \cdot 10^{-16} [\frac{erg}{s\ Hz\ cm^{-2}}]$ y $6563[\AA]$ respectivamente.}
   \label{fig:datos_originales}
 \end{figure}
@@ -123,7 +123,7 @@ El término $P(\Theta| \vec{x}, M)$ indica la probabilidad a posteriori de que l
 Para todos los casos se utiliza la función de verosimilitud (\ref{ec:verosimilitud}), donde $M$ representa el modelo a evaluar. El valor de $\sigma$ corresponde al error asociado a cada punto, el cual se estima usando la desviación estándar de los puntos lejanos a la línea de absorción sobre el continuo ($\approx$ error de medición).
 
 \begin{myequation}
-  P(\vec{x}|\Theta, M) = \frac{1}{(2 \pi \sigma^2)^{N/2}} e^{\frac{-1}{2 \sigma^2} \sum_{i=1}^N (F_i - M(\lambda_i, \Theta))^2 }
+  P(\vec{x}|\Theta, M) = \frac{1}{(2 \pi \sigma^2)^{N/2}} e^{\frac{-1}{2 \sigma^2} \sum\limits_{i=1}^N (F_i - M(\lambda_i, \Theta))^2 }
   \label{ec:verosimilitud}
 \end{myequation}
 
@@ -163,7 +163,7 @@ P(b) = \frac{1}{\sqrt{2 \pi} \sigma_b} e^{\frac{-(b - \bar b)^2}{2 \sigma_{b}^2}
 \begin{itemize}
 \item $\bar b = 0.8493|\lambda_0 - \lambda(\frac{\bar A}{2})|$
 
-\item $\sigma_b = \frac{\Delta \lambda}{2}$ Se estima a partir de la resolución en longitud de onda (resolución horizontal) del modelo.
+\item $\sigma_b = \Delta$ Se estima a partir de la resolución en longitud de onda (resolución horizontal) del modelo.
 \end{itemize}
 
 El valor de $\bar b$ se determina usando la aproximación \emph{Full Width at Half Maximum} (FWHM), donde $\lambda(\frac{\bar A}{2})$ es uno de los valores de longitud de onda en que la línea de absorción cae a la mitad en amplitud\footnote{Se asume que la línea de absorción es aproximadamente simétrica.}.
@@ -189,10 +189,62 @@ Y para $b_1$, $b_2$:
 
 \section{Implementación y Resultados}
 
-Para operar con los datos en un rango razonable, y evitar \emph{overflows} numéricos o divisiones por cero, se escalan los valores del espectro multiplicándolo por $2.5 \cdot 10^{18}$. Así, el vector de datos queda: $\vec{x} = (\vec{\lambda}, \vec{F^*})$, con $\vec{F^*} = 2.5 \cdot 10^{18} \vec{F}$. 
+Para operar numéricamente con los datos, y evitar \emph{overflows} o divisiones por cero, se escalan los valores del espectro multiplicándolo por $2.5 \cdot 10^{18}$. Esta corrección es considerada e invertida al momento de retornar los valores calculados.
+
+El error de los datos, calculado usando el estimador Gaussiano de varianza\footnote{Se calcula usando los datos con $\lambda < 6525[\AA]$ y $\lambda > 6600[\AA]$. El estimador usado es $\hat{\sigma^2} = \frac{1}{n} \sum\limits_{i=1}^N (F_i - C_0)$.} respecto al continuo, es $\sigma^2 = 0.1695$ 
 
 \subsection{Modelo 1: Línea Gaussiana Simple}
 
+El valor de los parámetros estimados a priori es:
 
+\begin{itemize}
+  \item $ \bar{A} = 8.848 \cdot 10^{-18} [\frac{erg}{s\ Hz\ cm^{-2}}]$
+  
+  \item $ \sigma_A = 1.646 \cdot 10^{-19} [\frac{erg}{s\ Hz\ cm^{-2}}]$
+  
+  \item $ \bar{b} = 4.0 [\AA] $
+  
+  \item $ \sigma_b = 1.6 [\AA] $
+\end{itemize}
+
+Tras implementar el algoritmo, se obtienen las distribuciones de probabilidad a posteriori para cada estimador, las cuales pueden observarse en las Figuras \ref{fig:distr_A_modelo1} y \ref{fig:distr_b_modelo1}. A partir de ellas se determinan los valores óptimos $\Theta^*$, estimados como la esperanza de cada distribución.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[scale = 0.5]{images/distr_A_modelo1.png}
+  \caption{Distribución de probabilidad a posteriori para parámetro A del Modelo 1.}
+  \label{fig:distr_A_modelo1}
+\end{figure}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[scale = 0.5]{images/distr_b_modelo1.png}
+  \caption{Distribución de probabilidad a posteriori para parámetro b del Modelo 1.}
+  \label{fig:distr_b_modelo1}
+\end{figure}
+
+Para los intervalos de confianza se integra cada distribución desde su valor medio hacia afuera simétricamente, deteniéndose en los valores extremos tales que el valor del área sea 0.68. El enfoque es válido debido a que la distribución a posteriori para cada parámetro está asociada a una densidad de probabilidad.
+
+Así, en resumen, se obtiene:
+
+\begin{itemize}
+  \item $A^* = 8.846 \cdot 10^{-18} [\frac{erg}{s\ Hz\ cm^{-2}}]$
+
+  \item Invervalo de confianza de $A$ al 68\%: $A \in [8.618,\  9.043] \cdot 10^{-18} [\frac{erg}{s\ Hz\ cm^{-2}}]$
+
+  \item $b^* = 4.2782$
+  
+  \item Invervalo de confianza de $b$ al 68\%: $b \in [4.109,\  4.417] \cdot 10^{-18} [\frac{erg}{s\ Hz\ cm^{-2}}]$
+  
+\end{itemize}
 
 \end{document}
+
+Con los valores determinados se obtiene el ajuste de la Figura \ref{fig:datos_vs_modelo1}.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[scale = 0.5]{images/datos_vs_modelo.png}
+  \caption{Ajuste bayesiano del Modelo 1 junto a los datos originales.}
+  \label{fig:datos_vs_modelo1}
+\end{figure}

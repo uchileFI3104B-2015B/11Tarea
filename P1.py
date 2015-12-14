@@ -29,10 +29,14 @@ if __name__ == '__main__':
 
     var_data = suma / n  # Varianza medicion
 
+    print('Varianza datos = ' + str(var_data))
+
     ''' Determinar parametros distribuciones de A y b '''
     ''' Parametro A '''
     mean_A = abs(min(flux) - C_0)
+    print('A medio estimado a priori = ' +str(mean_A / scale_fact))
     std_A = np.sqrt(var_data)  # Estimador sesgado de desv. estandar
+    print('sigma_A estimado a priori = ' +str(std_A / scale_fact))
 
     ''' Parametro b '''
     # Se busca valor que cumple condicion
@@ -41,7 +45,9 @@ if __name__ == '__main__':
     index_min = values.argmin()
 
     mean_b = abs(lambda_0 - wavelength[index_min])
+    print('b medio estimado a priori = ' +str(mean_b))
     std_b = (wavelength[1] - wavelength[0])
+    print('sigma_b estimado a priori = ' +str(std_b))
 
     ''' Crear modelo '''
     modelo = mod.make_modelo1(var_data, mean_A, std_A, mean_b, std_b, C_0, lambda_0)
@@ -82,6 +88,12 @@ if __name__ == '__main__':
     # Graficar distribucion de probabilidad de A
     plt.figure()
     plt.plot(x_A, y_A, 'r')
+    plt.xlim([18, 26])
+    plt.xlabel('$A[erg\ s^{-1} Hz^{-1}cm^{-2}]$', size=16)
+    plt.ylabel('$P(A|x,M_1)$', size=16)
+    plt.title('Distribucion de probabilidad a posteriori para parametro A\n Modelo 1'
+    , size=16, y=1.01)
+    plt.grid()
 
     ''' Obtener valor optimo de b'''
     x_b = modelo.full_b
@@ -117,11 +129,23 @@ if __name__ == '__main__':
     # Graficar probabilidad de b
     plt.figure()
     plt.plot(x_b, y_b, 'b')
+    plt.xlim([3, 5.5])
+    plt.xlabel('$b[\AA]$', size=16)
+    plt.ylabel('$P(b|x,M_1)$', size=16)
+    plt.title('Distribucion de probabilidad a posteriori para parametro b\n Modelo 1'
+    , size=16, y=1.01)
+    plt.grid()
 
 
     ''' Graficar modelo vs datos '''
     x_modelo = np.linspace(wavelength[0], wavelength[-1], 200)
     plt.figure()
-    plt.plot(wavelength, flux / scale_fact, 'o')
-    plt.plot(x_modelo, modelo.model(x_modelo, optimal_A, optimal_b) / scale_fact)
+    plt.plot(wavelength, flux / scale_fact, 'o', label = 'Datos')
+    plt.plot(x_modelo, modelo.model(x_modelo, optimal_A, optimal_b) / scale_fact, label = 'Modelo 1')
+    plt.xlim([wavelength[0], wavelength[-1]])
+    plt.xlabel('Wavelength$[\AA]$', size=16)
+    plt.ylabel('$F_\upsilon[erg\ s^{-1} Hz^{-1}cm^{-2}]$', size=16)
+    plt.title('Observacion Espectroscopica junto al Modelo 1'
+    , size=16, y=1.04)
+    plt.legend(loc = 4)
     plt.show()
