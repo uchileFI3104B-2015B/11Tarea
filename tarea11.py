@@ -16,6 +16,7 @@ Para ello se utilizan dos modelos: uno gaussiano simple y otro con dos
 funciones gaussianas.
 '''
 
+
 def modelo_1(x, A, sigma):
     '''
     Retorna la función correspondiente al primer modelo, es decir, una
@@ -32,7 +33,6 @@ def gauss_simple(x, A, sigma):
     gaussiana trasladada en 1e-16
     '''
     return 1e-16 - A * scipy.stats.cauchy(loc=6563, scale=sigma).pdf(x)
-
 
 
 def modelo_2(x, A1, s1, A2, s2):
@@ -144,7 +144,7 @@ with pm.Model() as basic_model1:
     sigma_mod1 = pm.Normal('sigma_mod1', mu=3.7, sd=0.5)
 
     # Expected value of outcome
-    y_out = modelo_1 (wavelength, Amplitud_mod1, sigma_mod1)
+    y_out = modelo_1(wavelength, Amplitud_mod1, sigma_mod1)
 
     # Likelihood (sampling distribution) of observations
     Y_obs = pm.Normal('Y_obs', mu=y_out, sd=1.5, observed=Fnu)
@@ -180,12 +180,13 @@ print ''
 with pm.Model() as basic_model2:
     # Priors for unknown model parameters
     Amplitud1_mod2 = pm.Normal('Amplitud1_mod2', mu=0.6, sd=0.05)
-    sigma1_mod2 = pm.Normal('sigma1_mod2', mu=7, sd=1.5)
+    sigma1_mod2 = pm.Normal('sigma1_mod2', mu=1.5, sd=1.5)
     Amplitud2_mod2 = pm.Normal('Amplitud2_mod2', mu=0.2, sd=0.05)
-    sigma2_mod2 = pm.Normal('sigma2_mod2', mu=1.5, sd=1.5)
+    sigma2_mod2 = pm.Normal('sigma2_mod2', mu=7, sd=1.5)
 
     # Expected value of outcome
-    y_out = modelo_2(wavelength, Amplitud1_mod2, sigma1_mod2, Amplitud2_mod2, sigma2_mod2)
+    y_out = modelo_2(wavelength, Amplitud1_mod2, sigma1_mod2, Amplitud2_mod2,
+                     sigma2_mod2)
 
     # Likelihood (sampling distribution) of observations
     Y_obs = pm.Normal('Y_obs', mu=y_out, sd=1.5, observed=Fnu)
@@ -233,18 +234,38 @@ plt.figure(1, figsize=(10, 7))
 plt.style.use('bmh')
 plt.plot(wavelength, Fnu*1e-16, color='brown', drawstyle='steps-post',
          label='Datos')
-plt.plot(x, gauss_simple(x, E_Amplitud_mod1, E_sigma_mod1), label='Modelo 1 (Gaussiana simple)',
-         linewidth=2.0)
+plt.plot(x, gauss_simple(x, E_Amplitud_mod1, E_sigma_mod1),
+         label='Modelo 1 (Gaussiana simple)', linewidth=2.0)
 plt.xlim(6520, 6600)
 plt.legend(loc='lower left')
 plt.savefig('Fit_mod1.eps')
 
+plt.figure(2)
+plt.style.use('bmh')
+plt.hist(trace1.Amplitud_mod1 * 1e-16, bins=np.arange(0, 1.5, 0.01),
+         normed=True)
+plt.axvline(E_Amplitud_mod1, label='Esperanza')
+plt.axvline(A_limite_alto, label='Intervalo de credibilidad', color='m')
+plt.axvline(A_limite_bajo, 'm')
+plt.legend()
+plt.savefig('Densid_probab_Am1.eps')
 
-plt.figure(2, figsize=(10, 7))
+plt.figure(3)
+plt.style.use('bmh')
+plt.hist(trace1.sigma_mod1, bins=np.arange(2, 5, 0.05), normed=True)
+plt.axvline(E_sigma_mod1, label='Esperanza')
+plt.axvline(s_limite_alto, label='Intervalo de credibilidad', color='m')
+plt.axvline(s_limite_bajo, 'm')
+plt.legend()
+plt.savefig('Densid_probab_sm1.eps')
+
+
+plt.figure(4, figsize=(10, 7))
 plt.style.use('bmh')
 plt.plot(wavelength, Fnu*1e-16, color='brown', drawstyle='steps-post',
          label='Datos')
-plt.plot(x, gauss_doble(x, E_Amplitud1_mod2, E_sigma1_mod2, E_Amplitud2_mod2, E_sigma2_mod2), label='Modelo 2 (Gaussiana doble)',
+plt.plot(x, gauss_doble(x, E_Amplitud1_mod2, E_sigma1_mod2, E_Amplitud2_mod2,
+                        E_sigma2_mod2), label='Modelo 2 (Gaussiana doble)',
          linewidth=2.0)
 plt.plot(x, gauss_simple(x, E_Amplitud1_mod2, E_sigma1_mod2), '--', color='g',
          label='Gaussiana 1 (modelo 2)', alpha=0.8)
@@ -252,113 +273,54 @@ plt.plot(x, gauss_simple(x, E_Amplitud2_mod2, E_sigma2_mod2), '-.', color='g',
          label='Gaussiana 2 (modelo 2)', alpha=0.8)
 plt.xlim(6520, 6600)
 plt.legend(loc='lower left')
-plt.savefig('Fit.mod2.eps')
+plt.savefig('Fit_mod2.eps')
 
-plt.figure(3)
+plt.figure(5)
+plt.style.use('bmh')
+plt.hist(trace2.Amplitud1_mod2 * 1e-16, bins=np.arange(0, 1.3, 0.01),
+         normed=True)
+plt.axvline(E_Amplitud1_mod2, label='Esperanza')
+plt.axvline(A1_limite_alto, label='Intervalo de credibilidad', color='m')
+plt.axvline(A1_limite_bajo, 'm')
+plt.legend()
+plt.savefig('Densid_probab_A1m2.eps')
+
+plt.figure(6)
+plt.style.use('bmh')
+plt.hist(trace2.sigma1_mod2, bins=np.arange(0, 10, 0.3), normed=True)
+plt.axvline(E_sigma1_mod2, label='Esperanza')
+plt.axvline(s1_limite_alto, label='Intervalo de credibilidad', color='m')
+plt.axvline(s1_limite_bajo, 'm')
+plt.legend()
+plt.savefig('Densid_probab_s1m2.eps')
+
+plt.figure(7)
+plt.style.use('bmh')
+plt.hist(trace2.Amplitud2_mod2 * 1e-16, bins=np.arange(-1, 3, 0.2),
+         normed=True)
+plt.axvline(E_Amplitud2_mod2, label='Esperanza')
+plt.axvline(A2_limite_alto, label='Intervalo de credibilidad', color='m')
+plt.axvline(A2_limite_bajo, 'm')
+plt.legend()
+plt.savefig('Densid_probab_A2m2.eps')
+
+plt.figure(8)
+plt.style.use('bmh')
+plt.hist(trace2.sigma1_mod2, bins=np.arange(-1, 3, 0.1), normed=True)
+plt.axvline(E_sigma2_mod1, label='Esperanza')
+plt.axvline(s2_limite_alto, label='Intervalo de credibilidad', color='m')
+plt.axvline(s2_limite_bajo, 'm')
+plt.legend()
+plt.savefig('Densid_probab_s2m2.eps')
+
+plt.figure(9)
 pm.traceplot(trace2)
 plt.savefig('plot_diagnostico_mod2')
 
-plt.figure(4)
+plt.figure(10)
 [[ax11, ax12], [ax21, ax22]] = pm.traceplot(trace1)
 ax11.axvline(0.917)
 ax21.axvline(3.7)
 plt.savefig('plot_diagnostico_mod1')
 
 plt.show()
-
-
-
-
-# # Modelo 1:
-# Amplitud_mod1 = Fnu.max() - Fnu.min()
-# sigma_mod1 = 6  # Del gráfico
-# adivinanza_mod1 = [Amplitud_mod1, 0.1e-16, sigma_mod1, 2]
-#
-# beta0_grid, beta1_grid = np.mgrid[-0.0001:0.0001:201j, -5:15:201j]
-# n0, n1 = beta0_grid.shape
-# prior_m1 = np.zeros((n0, n1))
-# likelihood_m1 = np.zeros((n0, n1))
-# prior_m1, likelihood_m1 = fill_prior_1(beta0_grid, beta1_grid, adivinanza_mod1,
-#                                        [wavelength, Fnu])
-#
-# post_grid1 = likelihood_m1 * prior_m1
-# dx1 = 0.0002 / 200
-# dy1 = 20 / 200
-# P_E1 = np.sum(post_grid1) * dx1 * dy1
-# marg_Amplitud_mod1 = np.sum(post_grid1, axis=1) * dy1 / P_E1
-# marg_sigma_mod1 = np.sum(post_grid1, axis=0) * dx1 / P_E1
-# E_Amplitud_mod1 = np.sum(beta0_grid[:, 0] * marg_Amplitud_mod1) * dx1
-# E_sigma_mod1 = np.sum(beta1_grid[0, :] * marg_sigma_mod1) * dy1
-#
-# print 'Primer modelo: Gaussiana simple'
-# print 'Amplitud                :', E_Amplitud_mod1
-# print 'sigma                   :', E_sigma_mod1
-# print ''
-#
-#
-# # Modelo 2:
-# Amplitud1_mod2 = 0.02e-16
-# sigma1_mod2 = 6.
-# Amplitud2_mod2 = 0.07e-16
-# sigma2_mod2 = 1.5
-# adivinanza_mod2 = [Amplitud1_mod2, 2, sigma1_mod2, 2, Amplitud2_mod2, 2,
-#                    sigma2_mod2, 2]
-# beta0_grid, beta1_grid, beta2_grid, beta3_grid = np.mgrid[-0.5:0.5:51j,
-#                                                           -5:15:51j,
-#                                                           -0.5:0.5:51j,
-#                                                           -5:15:51j]
-# prior_m2, likelihood_m2 = fill_prior_2(beta0_grid, beta1_grid, beta2_grid,
-#                                        beta3_grid, adivinanza_mod2,
-#                                        [wavelength, Fnu])
-#
-# post_grid2 = likelihood_m2 * prior_m2
-# dx2 = 1 / 200
-# dy2 = 20 / 200
-# dz2 = 1 / 200
-# dt2 = 20 / 200
-# P_E2 = np.sum(post_grid2) * dx2 * dy2 * dz2 * dt2
-# marg_Amplitud1_mod2 = (np.sum(np.sum(np.sum(post_grid2, axis=1), axis=1),
-#                               axis=1) * dy2 * dz2 * dt2 / P_E2)
-# marg_sigma1_mod2 = (np.sum(np.sum(np.sum(post_grid2, axis=1), axis=1),
-#                               axis=1) * dx2 * dz2 * dt2 / P_E2)
-# marg_Amplitud2_mod2 = (np.sum(np.sum(np.sum(post_grid2, axis=1), axis=1),
-#                               axis=1) * dx2 * dy2 * dt2 / P_E2)
-# marg_sigma2_mod2 = (np.sum(np.sum(np.sum(post_grid2, axis=1), axis=1),
-#                               axis=1) * dx2 * dy2 * dz2 / P_E2)
-#
-# E_Amplitud1_mod2 = np.sum(beta0_grid[:, 0] * marg_Amplitud1_mod2) * dx2
-# E_sigma1_mod2 = np.sum(beta1_grid[0, :] * marg_sigma1_mod2) * dy2
-# E_Amplitud2_mod2 = np.sum(beta0_grid[:, 0] * marg_Amplitud2_mod2) * dz2
-# E_sigma2_mod2 = np.sum(beta1_grid[0, :] * marg_sigma2_mod2) * dt2
-#
-# print 'Segundo modelo: Gaussiana doble'
-# print 'Amplitud 1              :', E_Amplitud1_mod2
-# print 'sigma 1                 :', E_sigma1_mod2
-# print 'Amplitud 2              :', E_Amplitud2_mod2
-# print 'sigma 2                 :', E_sigma2_mod2
-# print ''
-#
-#
-# # Plots
-#
-# plt.figure(1)
-# plt.style.use('bmh')
-# plt.rcParams['xtick.labelsize'] = 'large'
-# plt.rcParams['ytick.labelsize'] = 'large'
-# plot_distribution(beta0_grid, beta1_grid, prior_m1 * likelihood_m1)
-# plt.savefig('fig_1.eps')
-#
-# plt.figure(2)
-# plt.style.use('bmh')
-# plt.rcParams['xtick.labelsize'] = 'large'
-# plt.rcParams['ytick.labelsize'] = 'large'
-# plt.plot(beta0_grid, marg_Amplitud_mod1)
-# plt.savefig('Densidad_prob_Amod1.eps')
-#
-# plt.figure(3)
-# plt.style.use('bmh')
-# plt.rcParams['xtick.labelsize'] = 'large'
-# plt.rcParams['ytick.labelsize'] = 'large'
-# plt.plot(beta1_grid, marg_sigma_mod1)
-# plt.savefig('Densidad_prob_sigmamod1.eps')
-# plt.show()
