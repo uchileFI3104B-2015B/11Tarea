@@ -83,7 +83,7 @@ Para describir la línea se probarán dos modelos:
 \item Línea Gaussiana Simple: A partir de la curva se observa que puede resultar conveniente describirla asumiendo que es de forma Gaussiana. En la ecuación (\ref{ec:modelo_1}) se explicita el modelo propuesto. 
 
 \begin{myequation}
-M_1(\lambda; A, b) = C_0 - A e^{\frac{(\lambda - \lambda_0)^2}{2 b^2}}
+M_1(\lambda; A, b) = C_0 - A e^{\frac{-(\lambda - \lambda_0)^2}{2 b^2}}
 \label{ec:modelo_1}
 \end{myequation}
 
@@ -92,7 +92,7 @@ M_1(\lambda; A, b) = C_0 - A e^{\frac{(\lambda - \lambda_0)^2}{2 b^2}}
 \item Línea Gaussiana Doble: El modelo está explicitado en la ecuación (\ref{ec:modelo_2}). Se tienen los mismos parámetros conocidos $\lambda_0$ y $C_0$, pero en éste hay cuatro parámetros libres: $A_1$, $A_2$, $b_1$, $b_2$.
 
 \begin{myequation}
-M_2(\lambda; A_1, A_2, b_1, b_2) = C_0 - A_1 e^{\frac{(\lambda - \lambda_0)^2}{2 b_1^2}} - A_2 e^{\frac{(\lambda - \lambda_0)^2}{b_2^2}}
+M_2(\lambda; A_1, A_2, b_1, b_2) = C_0 - A_1 e^{\frac{-(\lambda - \lambda_0)^2}{2 b_1^2}} - A_2 e^{\frac{-(\lambda - \lambda_0)^2}{2 b_2^2}}
 \label{ec:modelo_2}
 \end{myequation}
 
@@ -140,7 +140,7 @@ El modelo descrito por (\ref{ec:modelo_1}) posee dos parámetros libres, $A$ y $
 A priori se decide que la distribución de $A$ es:
 
 \begin{myequation}
-P(A) = \frac{1}{\sqrt{2 \pi} \sigma_A} e^{\frac{(A - \bar A)^2}{2 \sigma_{A}^2}}
+P(A) = \frac{1}{\sqrt{2 \pi} \sigma_A} e^{\frac{-(A - \bar A)^2}{2 \sigma_{A}^2}}
 \label{ec:distr_A}
 \end{myequation}
 
@@ -156,11 +156,11 @@ Para determinar el valor de cada parámetro se debe tener en cuenta que A repres
 Análogamente, la distribución escogida para $b$ es:
 
 \begin{myequation}
-P(b) = \frac{1}{\sqrt{2 \pi} \sigma_b} e^{\frac{(b - \bar b)^2}{2 \sigma_{b}^2}}
+P(b) = \frac{1}{\sqrt{2 \pi} \sigma_b} e^{\frac{-(b - \bar b)^2}{2 \sigma_{b}^2}}
 \end{myequation}
 
 \begin{itemize}
-\item $\bar b = 0.8493(\lambda_0 - \lambda(\frac{\bar A}{2}))$
+\item $\bar b = 0.8493|\lambda_0 - \lambda(\frac{\bar A}{2})|$
 
 \item $\sigma_b = \frac{\Delta \lambda}{2}$ Se estima a partir de la resolución en longitud de onda (resolución horizontal) del modelo.
 \end{itemize}
