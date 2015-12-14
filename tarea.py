@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
+
 # Funciones a utilizar (analogas al DEMO)
 
 def gauss(x, mu, sigma):
@@ -130,7 +131,7 @@ sigma1 = 6  # Del grafico
 adivinanza1 = [A1, 1, sigma1, 3]
 
 
-beta0_grid1, beta1_grid1 = np.mgrid[0:5:201j, 3:5:201j]
+beta0_grid1, beta1_grid1 = np.mgrid[0.73:0.8:201j, 3.4:4:201j]
 prior_m1 = fill_prior_1(beta0_grid1, beta1_grid1, adivinanza1)
 likelihood_m1 = fill_likelihood_1(beta0_grid1, beta1_grid1,
                                    [wavelength, fnu])
@@ -155,10 +156,10 @@ Modelo 2:
 '''
 
 adivinanza2 =[9., 4., 2.5, 1., 10., 5., 8.5, 3.]
-beta0_grid2, beta1_grid2, beta2_grid2, beta3_grid2 = np.mgrid[0.3:0.5:51j,
-                                                              1:4:51j,
-                                                              0:1:51j,
-                                                              6:12:51j]
+beta0_grid2, beta1_grid2, beta2_grid2, beta3_grid2 = np.mgrid[0.34:0.5:51j,
+                                                              2:3:51j,
+                                                              0.38:0.6:51j,
+                                                              6:11:51j]
 prior_grid2 = fill_prior_2(beta0_grid2, beta1_grid2, beta2_grid2,
                           beta3_grid2, adivinanza2)
 likelihood_grid2 = fill_likelihood_2(beta0_grid2, beta1_grid2, beta2_grid2,
@@ -189,3 +190,20 @@ print 'Amplitud 2               :', E_A2_2
 print 'sigma 2                  :', E_sigma2_2
 print ''
 print "Factor bayesiano:", P_E1/P_E2
+
+'''
+-----------------------------------------------------------------------------
+Guardando informacion para procesar en otro script:
+'''
+#len: 201, 201, 51, 51, 51, 51
+marginales = np.concatenate((marg_A1, marg_sigma1, marg_A2_1, marg_sigma2_1,
+                             marg_A2_2, marg_sigma2_2), axis=0)
+esperanzas = [E_A1, E_sigma1, E_A2_1, E_sigma2_1, E_A2_2, E_sigma2_2]
+dmarginales = np.concatenate((beta0_grid1[:, 0], beta1_grid1[0, :],
+                              beta0_grid2[:, 0, 0, 0], beta1_grid2[0, :, 0, 0],
+                              beta2_grid2[0, 0, :, 0],
+                              beta3_grid2[0, 0, 0, :]), axis=0)
+
+np.savetxt('marginales.txt', marginales)
+np.savetxt('esperanzas.txt', esperanzas)
+np.savetxt('dmarginales.txt', dmarginales)
