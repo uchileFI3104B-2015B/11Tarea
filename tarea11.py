@@ -238,16 +238,20 @@ plt.plot(x, gauss_simple(x, E_Amplitud_mod1, E_sigma_mod1),
          label='Modelo 1 (Gaussiana simple)', linewidth=2.0)
 plt.xlim(6520, 6600)
 plt.legend(loc='lower left')
+plt.xlabel('Wavelength [$\AA$]', fontsize=16)
+plt.ylabel('$F_v$[erg s$^{-1}$Hz$^{-1}$cm$^{-2}$]', fontsize=16)
 plt.savefig('Fit_mod1.eps')
 
 plt.figure(2)
 plt.style.use('bmh')
-h, _, _ =  plt.hist(trace1.Amplitud_mod1 * 1e-16, bins=np.arange(0.6e-16, 1.2e-16, 1.5e-18),
-         normed=True, color='g')
+h, _, _ =  plt.hist(trace1.Amplitud_mod1 * 1e-16,
+                    bins=np.arange(0.6e-16, 1.2e-16, 1.5e-18),
+                    normed=True, color='g')
 plt.axvline(E_Amplitud_mod1, label='Esperanza')
 plt.axvline(A_limite_alto, label='Intervalo de credibilidad', color='m')
 plt.axvline(A_limite_bajo, color='m')
 plt.legend(loc='upper left')
+plt.xlabel('Amplitud [erg s$^{-1}$Hz$^{-1}$cm$^{-2}\AA$]')
 plt.savefig('Densid_probab_Am1.eps')
 
 plt.figure(3)
@@ -256,6 +260,7 @@ h, _, _ = plt.hist(trace1.sigma_mod1, bins=np.arange(2, 5.5, 0.1), normed=True)
 plt.axvline(E_sigma_mod1, label='Esperanza')
 plt.axvline(s_limite_alto, label='Intervalo de credibilidad', color='m')
 plt.axvline(s_limite_bajo, color='m')
+plt.xlabel('Varianza [$\AA$]')
 plt.legend(loc='upper left')
 plt.savefig('Densid_probab_sm1.eps')
 
@@ -273,15 +278,19 @@ plt.plot(x, gauss_simple(x, E_Amplitud2_mod2, E_sigma2_mod2), '-.', color='g',
          label='Gaussiana 2 (modelo 2)', alpha=0.8)
 plt.xlim(6520, 6600)
 plt.legend(loc='lower left')
+plt.xlabel('Wavelength [$\AA$]', fontsize=16)
+plt.ylabel('$F_v$[erg s$^{-1}$Hz$^{-1}$cm$^{-2}$]', fontsize=16)
 plt.savefig('Fit_mod2.eps')
 
 plt.figure(5)
 plt.style.use('bmh')
-h, _, _ = plt.hist(trace2.Amplitud1_mod2 * 1e-16, bins=np.arange(1e-16, 3e-16, 1.5e-19),
-         normed=True, color='g')
+h, _, _ = plt.hist(trace2.Amplitud1_mod2 * 1e-16,
+                   bins=np.arange(4e-17, 8e-17, 1.5e-18),
+                   normed=True, color='g')
 plt.axvline(E_Amplitud1_mod2, label='Esperanza')
 plt.axvline(A1_limite_alto, label='Intervalo de credibilidad', color='m')
 plt.axvline(A1_limite_bajo, color='m')
+plt.xlabel('Amplitud [erg s$^{-1}$Hz$^{-1}$cm$^{-2}\AA$]')
 plt.legend()
 plt.savefig('Densid_probab_A1m2.eps')
 
@@ -291,25 +300,29 @@ h, _, _ = plt.hist(trace2.sigma1_mod2, bins=np.arange(-4, 7, 0.3), normed=True)
 plt.axvline(E_sigma1_mod2, label='Esperanza')
 plt.axvline(s1_limite_alto, label='Intervalo de credibilidad', color='m')
 plt.axvline(s1_limite_bajo, color='m')
+plt.xlabel('Varianza [$\AA$]')
 plt.legend()
 plt.savefig('Densid_probab_s1m2.eps')
 
 plt.figure(7)
 plt.style.use('bmh')
-h, _, _ = plt.hist(trace2.Amplitud2_mod2 * 1e-16, bins=np.arange(0, 4e-17, 1.5e-18),
-         normed=True, color='g')
+h, _, _ = plt.hist(trace2.Amplitud2_mod2 * 1e-16,
+                   bins=np.arange(0, 4e-17, 1.5e-18),
+                   normed=True, color='g')
 plt.axvline(E_Amplitud2_mod2, label='Esperanza')
 plt.axvline(A2_limite_alto, label='Intervalo de credibilidad', color='m')
 plt.axvline(A2_limite_bajo, color='m')
+plt.xlabel('Amplitud [erg s$^{-1}$Hz$^{-1}$cm$^{-2}\AA$]')
 plt.legend()
 plt.savefig('Densid_probab_A2m2.eps')
 
 plt.figure(8)
 plt.style.use('bmh')
-h, _, _ = plt.hist(trace2.sigma2_mod2, bins=np.arange(0, 10, 0.1), normed=True)
+h, _, _ = plt.hist(trace2.sigma2_mod2, bins=np.arange(2, 12, 0.4), normed=True)
 plt.axvline(E_sigma2_mod2, label='Esperanza')
 plt.axvline(s2_limite_alto, label='Intervalo de credibilidad', color='m')
 plt.axvline(s2_limite_bajo, color='m')
+plt.xlabel('Varianza [$\AA$]')
 plt.legend()
 plt.savefig('Densid_probab_s2m2.eps')
 
