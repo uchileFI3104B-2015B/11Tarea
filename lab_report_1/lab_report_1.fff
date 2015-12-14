@@ -1,0 +1,32 @@
+\begin{figure}[ht]
+  \centering
+  \includegraphics[scale = 0.5]{images/datos_originales.png}
+  \caption{Datos originales observados. El nivel del continuo y la longitud de onda central de la l\unhbox \voidb@x \bgroup \let \unhbox \voidb@x \setbox \@tempboxa \hbox {\OT1\i \global \mathchardef \accent@spacefactor \spacefactor }\accent 19 \OT1\i \egroup \spacefactor \accent@spacefactor nea de absorci\unhbox \voidb@x \bgroup \let \unhbox \voidb@x \setbox \@tempboxa \hbox {o\global \mathchardef \accent@spacefactor \spacefactor }\accent 19 o\egroup \spacefactor \accent@spacefactor n son conocidos, con valores $1 \cdot 10^{-16} [\frac{erg}{s\ Hz\ cm^{-2}}]$ y $6563[\AA]$ respectivamente.}
+  \label{fig:datos_originales}
+\end{figure}
+\efloatseparator
+ 
+\begin{figure}[h!]
+  \centering
+  \includegraphics[scale = 0.5]{images/distr_A_modelo1.png}
+  \caption{Distribuci\unhbox \voidb@x \bgroup \let \unhbox \voidb@x \setbox \@tempboxa \hbox {o\global \mathchardef \accent@spacefactor \spacefactor }\accent 19 o\egroup \spacefactor \accent@spacefactor n de probabilidad a posteriori para par\unhbox \voidb@x \bgroup \let \unhbox \voidb@x \setbox \@tempboxa \hbox {a\global \mathchardef \accent@spacefactor \spacefactor }\accent 19 a\egroup \spacefactor \accent@spacefactor metro A del Modelo 1.}
+  \label{fig:distr_A_modelo1}
+\end{figure}
+\efloatseparator
+ 
+\begin{figure}[h!]
+  \centering
+  \includegraphics[scale = 0.5]{images/distr_b_modelo1.png}
+  \caption{Distribuci\unhbox \voidb@x \bgroup \let \unhbox \voidb@x \setbox \@tempboxa \hbox {o\global \mathchardef \accent@spacefactor \spacefactor }\accent 19 o\egroup \spacefactor \accent@spacefactor n de probabilidad a posteriori para par\unhbox \voidb@x \bgroup \let \unhbox \voidb@x \setbox \@tempboxa \hbox {a\global \mathchardef \accent@spacefactor \spacefactor }\accent 19 a\egroup \spacefactor \accent@spacefactor metro b del Modelo 1.}
+  \label{fig:distr_b_modelo1}
+\end{figure}
+\efloatseparator
+ 
+\begin{figure}[h!]
+  \centering
+  \includegraphics[scale = 0.5]{images/datos_vs_modelo1.png}
+  \caption{Ajuste bayesiano del Modelo 1 junto a los datos originales.}
+  \label{fig:datos_vs_modelo1}
+\end{figure}
+\efloatseparator
+ 

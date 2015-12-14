@@ -27,7 +27,7 @@
 \usepackage{natbib} % Required to change bibliography style to APA
 \usepackage{amsmath} % Required for some math elements 
 \usepackage[utf8]{inputenc}
-\usepackage[margin=1.2in]{geometry}
+\usepackage[margin=1.3in]{geometry}
 \usepackage{hyperref}
 
 \setlength\parindent{0pt} % Removes all indentation from paragraphs
@@ -98,13 +98,21 @@ M_2(\lambda; A_1, A_2, b_1, b_2) = C_0 - A_1 e^{\frac{-(\lambda - \lambda_0)^2}{
 
 \end{enumerate}
 
+Los objetivos son: 
 
-% MEJORAR AL FINAL
-Los objetivos son estimar el valor de cada parámetro con un intervalo de credibilidad del 68\%, usando métodos Bayesianos , y luego utilizar métodos de selección Bayesiana de modelos para decidir cuál de los dos propuestos representa mejor los datos.
+\begin{enumerate}
+  \item Definir las distribuciones a Priori para cada parámetro.
+  
+  \item Estimar el valor de los parámetro de cada modelo junto a su intervalo de credibilidad al 68\%, usando métodos Bayesianos.
+  
+  \item Escoger el modelo que entregue una mejor representación de los datos utilizando técnica Bayesianas.
+\end{enumerate}
+
 
 
 %%%------------------- METODOLOGIA -----------------------------%%%
 \section{Metodología}
+\label{sec:metodologia}
 
 Para obtener una estimación de los parámetros $\vec{\Theta}$ para cada modelo $M$, se utiliza la regla de Bayes (\ref{eq:bayes}) y los datos empíricos $\vec{x} = (\vec{\lambda}, \vec{F})$.
 
@@ -127,8 +135,7 @@ Para todos los casos se utiliza la función de verosimilitud (\ref{ec:verosimili
   \label{ec:verosimilitud}
 \end{myequation}
 
-La probabilidad a priori de los parámetros de cada distribución dependerá de cada modelo y se detalla en las secciones \ref{sec:modelo1} y \ref{sec:modelo2}.
-% FALTA PONER COMO SE ESTIMAN LOS MEJORES PARAMETROS
+La probabilidad a priori de los parámetros de cada distribución dependerá de cada modelo y se detalla en las secciones \ref{sec:modelo1} y \ref{sec:modelo2}. Con todo lo anterior, se puede calcular $P(\Theta| \vec{x}, M)$, la que permite estimar los valores óptimos\footnote{En este caso se utilizará como valor óptimo $\Theta^*$ al valor $\textbf{E}(\Theta)$ calculado usando $P(\Theta| \vec{x}, M)$.} y sus intervalos de credibilidad.
 
 %%%---------------------- PARAMETROS PARA CADA MODELO ---------------------------%%%
 \subsection{Parámetros modelo 1: Línea Gaussiana Simple}
@@ -170,32 +177,53 @@ El valor de $\bar b$ se determina usando la aproximación \emph{Full Width at Ha
 
 \subsection{Parámetros modelo 2: Línea Gaussiana Doble}
 \label{sec:modelo2}
-En este caso la distribución de probabilidad de cada parámetro también será Gaussiana y de forma análoga a los de la Sección \ref{sec:modelo1}. Entonces, en resumen:
+En este caso la distribución de probabilidad de cada parámetro también será Gaussiana y de forma análoga a los de la Sección \ref{sec:modelo1}. Al determinar los parámetros a Priori se aprovecha la disponibilidad de dos Gaussianas en el modelo, para utilizar una en el ajuste del extremo delgado de la línea y la otra para la base ancha.  Entonces, en resumen:
 
-Para las variables $A_1$ y $A_2$:
+Para las variables de la curva delgada, $A_1$ y $b_1$:
 \begin{itemize}
-  \item $\bar{A_1} = \bar{A_2} = \frac{\bar{A}}{2}$ La altura media de la línea de absorción debe ser $\approx \bar{A}$ al sumar las exponenciales.
+  \item $\bar{A_1} = \frac{\bar{2A}}{3}$ - La altura media de la línea de absorción debe ser $\approx \bar{A}$ al sumar las exponenciales.
   
-  \item $\sigma_{A_1} = \sigma_{A_2} = \frac{\sigma_A}{2}$ El error en $F$ recibe el mismo escalamiento que $A_1$, $A_2$.
+  \item $\sigma_{A_1} = \frac{2\sigma_A}{3}$ - El error en $F$ recibe el mismo escalamiento que $A_1$.
+  
+  \item $\bar{b_1} = \bar{b}$
+  
+  \item $\sigma_{b_1} = \sigma_b$ - Error asociado al muestreo.
 \end{itemize}
 
-Y para $b_1$, $b_2$:
+Y para la curva ancha, $A_2$ y $b_2$:
 
 \begin{itemize}
-  \item $\bar{b_1} = \bar{b_2} = \bar{b}$ El ancho de la curva se mantiene igual.
+  \item $\bar{A_2} = \frac{\bar{A}}{3}$
+
+  \item $\sigma_{A_2} = \frac{\sigma_A}{3}$
+
+  \item $\bar{b_2} = 3\bar{b}$ - Se estima que la base es aproximadamente tres veces mas ancha que la zona delgada.
   
-  \item $\sigma_{b_1} = \sigma_{b_2} = \sigma_b$ El error proviene del mismo fenómeno (es igual).
+  \item $\sigma_{b_2} = \sigma_b$
 \end{itemize}
 
-\section{Implementación y Resultados}
+\section{Selección de Modelo}
+
+Para escoger el modelo más apropiado se comparan sus funciones de verosimilitud (\ref{ec:funcion_verosimilitud}) evaluadas en los datos originales.
+
+\begin{equation}
+  P(\vec{x}|M) = \int P(\vec{x}|\Theta, M_i) d\Theta
+  \label{ec:funcion_verosimilitud}
+\end{equation}
+
+Así, se escogerá como mejor modelo a aquel con el valor de (\ref{ec:funcion_verosimilitud}) más elevado.
+
+\section{Resultados}
 
 Para operar numéricamente con los datos, y evitar \emph{overflows} o divisiones por cero, se escalan los valores del espectro multiplicándolo por $2.5 \cdot 10^{18}$. Esta corrección es considerada e invertida al momento de retornar los valores calculados.
 
-El error de los datos, calculado usando el estimador Gaussiano de varianza\footnote{Se calcula usando los datos con $\lambda < 6525[\AA]$ y $\lambda > 6600[\AA]$. El estimador usado es $\hat{\sigma^2} = \frac{1}{n} \sum\limits_{i=1}^N (F_i - C_0)$.} respecto al continuo, es $\sigma^2 = 0.1695$ 
+El error de los datos, calculado usando el estimador Gaussiano de varianza\footnote{Se calcula usando los datos con $\lambda < 6525[\AA]$ y $\lambda > 6600[\AA]$. El estimador usado es $\hat{\sigma^2} = \frac{1}{n} \sum\limits_{i=1}^N (F_i - C_0)$.} respecto al continuo, es $\sigma^2 = 0.1695$.
+
+A continuación se presentan en detalle los valores de cada término introducido en la sección Metodología para su modelo correspondiente, junto al ajuste logrado. 
 
 \subsection{Modelo 1: Línea Gaussiana Simple}
 
-El valor de los parámetros estimados a priori es:
+Los parámetros estimados a priori son:
 
 \begin{itemize}
   \item $ \bar{A} = 8.848 \cdot 10^{-18} [\frac{erg}{s\ Hz\ cm^{-2}}]$
@@ -207,44 +235,55 @@ El valor de los parámetros estimados a priori es:
   \item $ \sigma_b = 1.6 [\AA] $
 \end{itemize}
 
-Tras implementar el algoritmo, se obtienen las distribuciones de probabilidad a posteriori para cada estimador, las cuales pueden observarse en las Figuras \ref{fig:distr_A_modelo1} y \ref{fig:distr_b_modelo1}. A partir de ellas se determinan los valores óptimos $\Theta^*$, estimados como la esperanza de cada distribución.
 
-\begin{figure}[ht]
+Las distribuciones de probabilidad a posteriori para cada estimador pueden observarse en las Figuras \ref{fig:distr_A_modelo1} y \ref{fig:distr_b_modelo1}. A partir de ellas se determinan los valores $\Theta^*$.
+
+\begin{figure}[h!]
   \centering
   \includegraphics[scale = 0.5]{images/distr_A_modelo1.png}
   \caption{Distribución de probabilidad a posteriori para parámetro A del Modelo 1.}
   \label{fig:distr_A_modelo1}
 \end{figure}
 
-\begin{figure}[ht]
+\begin{figure}[h!]
   \centering
   \includegraphics[scale = 0.5]{images/distr_b_modelo1.png}
   \caption{Distribución de probabilidad a posteriori para parámetro b del Modelo 1.}
   \label{fig:distr_b_modelo1}
 \end{figure}
 
-Para los intervalos de confianza se integra cada distribución desde su valor medio hacia afuera simétricamente, deteniéndose en los valores extremos tales que el valor del área sea 0.68. El enfoque es válido debido a que la distribución a posteriori para cada parámetro está asociada a una densidad de probabilidad.
+Para los intervalos de credibilidad se integra cada distribución desde su valor medio hacia afuera simétricamente, deteniéndose en los valores extremos tales que el valor del área sea 0.68. El enfoque es válido debido a que la distribución a posteriori para cada parámetro está asociada a una densidad de probabilidad.
 
 Así, en resumen, se obtiene:
 
 \begin{itemize}
   \item $A^* = 8.846 \cdot 10^{-18} [\frac{erg}{s\ Hz\ cm^{-2}}]$
 
-  \item Invervalo de confianza de $A$ al 68\%: $A \in [8.618,\  9.043] \cdot 10^{-18} [\frac{erg}{s\ Hz\ cm^{-2}}]$
+  \item Invervalo de credibilidad de $A$ al 68\%: $A \in [8.618,\  9.043] \cdot 10^{-18} [\frac{erg}{s\ Hz\ cm^{-2}}]$
 
   \item $b^* = 4.2782$
   
-  \item Invervalo de confianza de $b$ al 68\%: $b \in [4.109,\  4.417] \cdot 10^{-18} [\frac{erg}{s\ Hz\ cm^{-2}}]$
+  \item Invervalo de credibilidad de $b$ al 68\%: $b \in [4.109,\  4.417] \cdot 10^{-18} [\frac{erg}{s\ Hz\ cm^{-2}}]$
   
 \end{itemize}
 
-Con los valores determinados se obtiene el ajuste de la Figura \ref{fig:datos_vs_modelo1}.
+Con los valores determinados a posteriori para el Modelo 1, se obtiene el ajuste de la Figura \ref{fig:datos_vs_modelo1}.
 
-\begin{figure}[ht]
+\clearpage
+\begin{figure}[h!]
   \centering
   \includegraphics[scale = 0.5]{images/datos_vs_modelo1.png}
   \caption{Ajuste bayesiano del Modelo 1 junto a los datos originales.}
   \label{fig:datos_vs_modelo1}
 \end{figure}
+
+
+\section{Conclusiones}
+Se concluye que el método Bayesiano de ajuste de curvas es una buena herramienta para verificar la capacidad que tiene un modelo para describir un fenómeno, mediante la herramienta de funciones de verosimilitud. Esta metodología resulta especialmente atractiva para verificar las capacidades predictivas de modelos teóricos mediante contraste con resultados experimentales. También tiene potenciales aplicaciones en inteligencia artificial. Un sistema inteligente podría inventarse muchos modelos e ir discriminandólos y ajustándolos usando sus observaciones y criterios Bayesianos, de forma que se converja a una \emph{mejor descripción} de su sistema en estudio.
+
+El requerimiento de definir distribuciones a priori para cada parámetro demanda una comprensión, al menos superficial, del fenómeno a describir. Lo mínimo que se necesita conocer es el tipo de distribución. En caso de que no se conozcan los parámetros para alguna variable, se puede lograr un ajuste mediante iteraciones con distintos parámetros en las distribuciones a priori, por ejemplo usando un algoritmo tipo Monte Carlo. Se escogerían entonces aquellos parámetros que maximicen la verosimilitud del modelo. Este tipo de procedimiento queda limitado por la disponibilidad de tiempo de cálculo, que como se sabe puede resultar muy elevado para este tipo de algoritmos. El disponer de mayor información sobre un sistema permite, entonces, obtener tiempos de cálculo más reducidos.
+
+Finalmente, este trabajo ilustra sobre la importancia de implementar métodos de optimización en operaciones matemáticas muy repetitivas. Si se hubiese dispuesto de más series de datos el tiempo de ejecución del programa hubiese aumentado considerablemente debido a la cantidad de integrales que se calculan para obtener el valor de cada parámetro. En caso de dedicarse al trabajo en esta línea, o con algoritmos de monte carlo, se recomienda estudiar técnicas de optimización de código tanto a nivel de algoritmos como conscientes de la arquitectura del procesador (por ejemplo utilizar \emph{multithreading)}, ya que tanto esta experiencia como las anteriores indican que el tiempo de cómputo es una limitante crucial.
+
 
 \end{document}
