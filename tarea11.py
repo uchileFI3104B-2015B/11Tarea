@@ -160,7 +160,7 @@ with basic_model1:
 E_Amplitud_mod1 = np.mean(trace1.Amplitud_mod1) * 1e-16
 E_sigma_mod1 = np.mean(trace1.sigma_mod1)
 
-Amplitud_mod1_sort = np.sort(trace1.Amplitud_mod1)
+Amplitud_mod1_sort = np.sort(trace1.Amplitud_mod1) * 1e-16
 sigma_mod1_sort = np.sort(trace1.sigma_mod1)
 
 A_limite_bajo = Amplitud_mod1_sort[int(N * 0.16)]
@@ -202,9 +202,9 @@ E_sigma1_mod2 = np.mean(trace2.sigma1_mod2)
 E_Amplitud2_mod2 = np.mean(trace2.Amplitud2_mod2) * 1e-16
 E_sigma2_mod2 = np.mean(trace2.sigma2_mod2)
 
-Amplitud1_mod2_sort = np.sort(trace2.Amplitud1_mod2)
+Amplitud1_mod2_sort = np.sort(trace2.Amplitud1_mod2) * 1e-16
 sigma1_mod2_sort = np.sort(trace2.sigma1_mod2)
-Amplitud2_mod2_sort = np.sort(trace2.Amplitud2_mod2)
+Amplitud2_mod2_sort = np.sort(trace2.Amplitud2_mod2) * 1e-16
 sigma2_mod2_sort = np.sort(trace2.sigma2_mod2)
 
 A1_limite_bajo = Amplitud1_mod2_sort[int(N * 0.16)]
@@ -242,21 +242,21 @@ plt.savefig('Fit_mod1.eps')
 
 plt.figure(2)
 plt.style.use('bmh')
-plt.hist(trace1.Amplitud_mod1 * 1e-16, bins=np.arange(0, 1.5, 0.01),
-         normed=True)
+h, _, _ =  plt.hist(trace1.Amplitud_mod1 * 1e-16, bins=np.arange(0.6e-16, 1.2e-16, 1.5e-18),
+         normed=True, color='g')
 plt.axvline(E_Amplitud_mod1, label='Esperanza')
 plt.axvline(A_limite_alto, label='Intervalo de credibilidad', color='m')
-plt.axvline(A_limite_bajo, 'm')
-plt.legend()
+plt.axvline(A_limite_bajo, color='m')
+plt.legend(loc='upper left')
 plt.savefig('Densid_probab_Am1.eps')
 
 plt.figure(3)
 plt.style.use('bmh')
-plt.hist(trace1.sigma_mod1, bins=np.arange(2, 5, 0.05), normed=True)
+h, _, _ = plt.hist(trace1.sigma_mod1, bins=np.arange(2, 5.5, 0.1), normed=True)
 plt.axvline(E_sigma_mod1, label='Esperanza')
 plt.axvline(s_limite_alto, label='Intervalo de credibilidad', color='m')
-plt.axvline(s_limite_bajo, 'm')
-plt.legend()
+plt.axvline(s_limite_bajo, color='m')
+plt.legend(loc='upper left')
 plt.savefig('Densid_probab_sm1.eps')
 
 
@@ -277,39 +277,39 @@ plt.savefig('Fit_mod2.eps')
 
 plt.figure(5)
 plt.style.use('bmh')
-plt.hist(trace2.Amplitud1_mod2 * 1e-16, bins=np.arange(0, 1.3, 0.01),
-         normed=True)
+h, _, _ = plt.hist(trace2.Amplitud1_mod2 * 1e-16, bins=np.arange(1e-16, 3e-16, 1.5e-19),
+         normed=True, color='g')
 plt.axvline(E_Amplitud1_mod2, label='Esperanza')
 plt.axvline(A1_limite_alto, label='Intervalo de credibilidad', color='m')
-plt.axvline(A1_limite_bajo, 'm')
+plt.axvline(A1_limite_bajo, color='m')
 plt.legend()
 plt.savefig('Densid_probab_A1m2.eps')
 
 plt.figure(6)
 plt.style.use('bmh')
-plt.hist(trace2.sigma1_mod2, bins=np.arange(0, 10, 0.3), normed=True)
+h, _, _ = plt.hist(trace2.sigma1_mod2, bins=np.arange(-4, 7, 0.3), normed=True)
 plt.axvline(E_sigma1_mod2, label='Esperanza')
 plt.axvline(s1_limite_alto, label='Intervalo de credibilidad', color='m')
-plt.axvline(s1_limite_bajo, 'm')
+plt.axvline(s1_limite_bajo, color='m')
 plt.legend()
 plt.savefig('Densid_probab_s1m2.eps')
 
 plt.figure(7)
 plt.style.use('bmh')
-plt.hist(trace2.Amplitud2_mod2 * 1e-16, bins=np.arange(-1, 3, 0.2),
-         normed=True)
+h, _, _ = plt.hist(trace2.Amplitud2_mod2 * 1e-16, bins=np.arange(0, 4e-17, 1.5e-18),
+         normed=True, color='g')
 plt.axvline(E_Amplitud2_mod2, label='Esperanza')
 plt.axvline(A2_limite_alto, label='Intervalo de credibilidad', color='m')
-plt.axvline(A2_limite_bajo, 'm')
+plt.axvline(A2_limite_bajo, color='m')
 plt.legend()
 plt.savefig('Densid_probab_A2m2.eps')
 
 plt.figure(8)
 plt.style.use('bmh')
-plt.hist(trace2.sigma1_mod2, bins=np.arange(-1, 3, 0.1), normed=True)
-plt.axvline(E_sigma2_mod1, label='Esperanza')
+h, _, _ = plt.hist(trace2.sigma2_mod2, bins=np.arange(0, 10, 0.1), normed=True)
+plt.axvline(E_sigma2_mod2, label='Esperanza')
 plt.axvline(s2_limite_alto, label='Intervalo de credibilidad', color='m')
-plt.axvline(s2_limite_bajo, 'm')
+plt.axvline(s2_limite_bajo, color='m')
 plt.legend()
 plt.savefig('Densid_probab_s2m2.eps')
 
