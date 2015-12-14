@@ -1,13 +1,6 @@
 \BOOKMARK [1][-]{section.1}{Introducci\363n}{}% 1
 \BOOKMARK [1][-]{section.2}{Metodolog\355a}{}% 2
-\BOOKMARK [2][-]{subsection.2.1}{Modelo 1: L\355nea Gaussiana Simple}{section.2}% 3
+\BOOKMARK [2][-]{subsection.2.1}{Par\341metros modelo 1: L\355nea Gaussiana Simple}{section.2}% 3
 \BOOKMARK [3][-]{subsubsection.2.1.1}{Par\341metro A}{subsection.2.1}% 4
 \BOOKMARK [3][-]{subsubsection.2.1.2}{Par\341metro b}{subsection.2.1}% 5
-\BOOKMARK [2][-]{subsection.2.2}{Conclusiones}{section.2}% 6
-\BOOKMARK [1][-]{section.3}{Intervalos de confianza Ajuste Lineal}{}% 7
-\BOOKMARK [2][-]{subsection.3.1}{Introducci\363n}{section.3}% 8
-\BOOKMARK [2][-]{subsection.3.2}{Desarrollo}{section.3}% 9
-\BOOKMARK [1][-]{section.4}{Conclusiones}{}% 10
-\BOOKMARK [1][-]{section.5}{Ap\351ndice}{}% 11
-\BOOKMARK [2][-]{subsection.5.1}{Regresi\363n Lineal a trav\351s del Origen}{section.5}% 12
-\BOOKMARK [2][-]{subsection.5.2}{M\351todo de Bootstrap}{section.5}% 13
+\BOOKMARK [2][-]{subsection.2.2}{Par\341metros modelo 2: L\355nea Gaussiana Doble}{section.2}% 6

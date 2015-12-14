@@ -28,6 +28,7 @@
 \usepackage{amsmath} % Required for some math elements 
 \usepackage[utf8]{inputenc}
 \usepackage[margin=1.2in]{geometry}
+\usepackage{hyperref}
 
 \setlength\parindent{0pt} % Removes all indentation from paragraphs
 
@@ -36,17 +37,22 @@
 \renewcommand{\figurename}{Figura}
 \renewcommand{\tablename}{Tabla}
 \renewcommand\refname{Referencias}
-
 \def\mean#1{\left< #1 \right>}
 %\usepackage{times} % Uncomment to use the Times New Roman font
 
+\usepackage{environ}
+\NewEnviron{myequation}{%
+\begin{equation}
+\scalebox{1.1}{$\BODY$}
+\end{equation}
+}
 %----------------------------------------------------------------------------------------
 %	DOCUMENT INFORMATION
 %----------------------------------------------------------------------------------------
 
-\title{M\'etodos num\'ericos para la Ciencia e Ingenier\'ia \\ Tarea 9: Modelamiento de Datos} % Title
+\title{M\'etodos num\'ericos para la Ciencia e Ingenier\'ia \\ Tarea 11: Ajuste de Curvas Bayesiano} % Title
 
-\author{Felipe Toledo Bittner} % Author name
+\author{Felipe Toledo B.} % Author name
 
 \date{\today} % Date for the report
 
@@ -58,106 +64,196 @@
 %	SECTION 1
 %----------------------------------------------------------------------------------------
 
-\section{Estimación de la constante de Hubble}
+\section{Introducción}
 
-\subsection{Introducción}
-
-La constante 
-\begin{equation}
-  Toro:\ z^2 + \left( \sqrt{x^2 + y^2} - 3 \right)^2 \leq 1
-  \label{eq:toro}https://online.stat.psu.edu/~ajw13/stat501/SpecialTopics/Reg_thru_origin.pdf
-\end{equation}
-
-\begin{equation}
-  Cilindro:\ (x - 2)^2 + z^2 \leq 1
-  \label{eq:cilindro}
-\end{equation}
-
-La densidad del sólido no es uniforme y es descrita por la fórmula (\ref{eq:densidad}). Debido a esto último, realizar una integración analítica para encontrar el centro de masa puede resultar complejo, por lo que se decide utilizar el método numérico de Monte Carlo para estimar su posición.
-
-\begin{equation}
-  \rho(x, y, z) = 0.5 (x^2 + y^2 + z^2)
-  \label{eq:densidad}
-\end{equation}
-
-Las integrales que se deben calcular para obtener la coordenada $x^i$ del centro de masa son las siguientes:
-
-\begin{equation}
-  M = \int_V \rho(\vec{r}) dx dy dz \approx \sum_j \rho(\vec{r_j}) \Delta V
-  \label{eq:calculo_masa}
-\end{equation}
-
-\begin{equation}
-  T^i = \int_V x^i \rho(\vec{r}) dx dy dz \approx \sum_j x_j \rho(\vec{r_j}) \Delta V
-  \label{eq:calculo_torque}
-\end{equation}
-
-
-En este caso $V$ es el volumen del cuerpo, condición que será relajada para el cálculo numérico y $\Delta V \approx \frac{V}{N}$, con $N$ la cantidad de términos en la suma. El cálculo de $x_i$ se realiza de la forma indicada en la ecuación (\ref{eq:error}). Como cada integral obtenida con el método de Monte Carlo posee un error asociado, este se propagará quedando $x^i = \mean{x^i} \pm \Delta x^i$.
-
-\begin{equation}
-  x^i = \frac{\mean{T^i} + \Delta T^i}{\mean{M} + \Delta M} = \frac{\mean{T^i}}{\mean{M}} \pm \frac{\mean{T^i}}{\mean{M}} \sqrt{ \left( \frac{\Delta T^i}{\mean{T^i}} \right)^2 + \left( \frac{\Delta M}{\mean{M}} \right)^2 }
-  \label{eq:error}
-\end{equation}
-
-\subsection{Implementación}
-
-Para usar el algoritmo de Monte Carlo, resulta útil definirse un volumen $W$ que contenga a $V$, pero posea una geometría mas sencilla. Para este caso se utilizará un $W$ con forma de caja rectangular que acote de forma lo más precisa posible al sólido en estudio.
-
-En la Figura \ref{fig:interseccion_P1} se puede ver que el volumen del sólido está contenido en $ [-1 \le z \le 1]$ y $[1 \le x \le 3]$. Realizando un despeje sencillo en $x = 1$, $z = 0$ se pueden obtener los valores extremos de $y$, que son $y^* = \pm \sqrt{15}$. Como se realizan integrales sobre volumen, el error por la resolución de los números de punto flotante debiese resultar despreciable, por lo que se decide usar el intervalo $[-\sqrt{15} \le y \le \sqrt{15} ]$ para terminar de definir el volumen $W$.
+En el presente trabajo se estudian modelos orientados a describir una línea de absorción de una observación espectroscópica, presentada en la Figura \ref{fig:datos_originales}.
 
 \begin{figure}[ht]
   \centering
-  \includegraphics[scale = 0.5]{images/interseccion_P1.png}
-  \caption{La figura naranja es el sólido en estudio. Está formado por el volumen que se obtiene al intersectar el toro (celeste) con el cilindro (azul) descritos en la Sección \ref{sec:introduccion_P1}. }
-  \label{fig:interseccion_P1}
+  \includegraphics[scale = 0.55]{images/datos_originales.png}
+  \caption{Datos originales observados. El nivel del continuo y la longitud de onda central de la línea de absorción son conocidos, con valores $1\cdot 10^{-16} [\frac{erg}{s\ Hz\ cm^{-2}}]$ y $6563[\AA]$ respectivamente.}
+  \label{fig:datos_originales}
 \end{figure}
 
-En este volumen $W$ se usa el método de Monte Carlo, evaluando puntos generados al azar mediante una distribución uniforme, acotada por los intervalos correspondientes a cada coordenada. En caso de que un punto caiga fuera del sólido, se define $\rho = 0$ para anular su contribución a la integral.
+Para describir la línea se probarán dos modelos:
 
-\subsection{Resultados}
+\begin{enumerate}
 
-Realizando el cálculo con $N = 10^6$ se obtienen los valores de la Tabla \ref{tab:resultados}. Al comparar con la Figura \ref{fig:interseccion_P1} se observa que las coordenadas calculadas para el centro de masa están en el espacio ocupado por el sólido y parecen razonables.
+\item Línea Gaussiana Simple: A partir de la curva se observa que puede resultar conveniente describirla asumiendo que es de forma Gaussiana. En la ecuación (\ref{ec:modelo_1}) se explicita el modelo propuesto. 
 
-\begin{table}[hl]
-\centering
-\begin{tabular}{|c|c|c|}
-\hline
-  Parámetro & Resultado \\
-  \hline
-  $M$ & $71.00 \pm 0.08$  \\ \hline
-  $x_{CM}$ & $2.081 \pm 0.003$\\ \hline
-  $y_{CM}$ & $0.001 \pm 0.003$\\ \hline
-  $z_{CM}$ & $1 \cdot 10^{-4} \pm 7 \cdot 10^{-4}$\\ \hline
-\end{tabular}
-\caption{Tabla con resultados del cálculo numérico para la masa $M$ y las coordenadas del centro de masa $x^i_{CM}$.}
-\label{tab:resultados}
-\end{table}
+\begin{myequation}
+f_1(\lambda; A, b) = C_0 - A e^{\frac{(\lambda - \lambda_0)^2}{2 b^2}}
+\label{ec:modelo_1}
+\end{myequation}
+
+Éste posee dos parámetros libres, $A$ y $b$. El valor de $\lambda_0$ y $C_0$ se asume conocido, donde $\lambda_0$ es la longitud de onda central de la línea de absorción y $C_0$ corresponde al nivel del continuo.  
+
+\item Línea Gaussiana Doble: El modelo está explicitado en la ecuación (\ref{ec:modelo_2}). Se tienen los mismos parámetros conocidos $\lambda_0$ y $C_0$, pero en éste hay cuatro parámetros libres: $A_1$, $A_2$, $b_1$, $b_2$.
+
+\begin{myequation}
+f_2(\lambda; A_1, A_2, b_1, b_2) = C_0 - A_1 e^{\frac{(\lambda - \lambda_0)^2}{2 b_1^2}} - A_2 e^{\frac{(\lambda - \lambda_0)^2}{b_2^2}}
+\label{ec:modelo_2}
+\end{myequation}
+\end{enumerate}
+
+
+% MEJORAR AL FINAL
+Los objetivos son estimar el valor de cada parámetro con un intervalo de credibilidad del 68\%, usando métodos Bayesianos , y luego utilizar métodos de selección Bayesiana de modelos para decidir cuál de los dos propuestos representa mejor los datos.
+
+\section{Metodología}
+
+\subsection{Modelo 1: Línea Gaussiana Simple}
+
+El modelo descrito por (\ref{ec:modelo_1}) posee dos parámetros libres, $A$ y $b$. Para utilizar técnicas Bayesianas de estimación es necesario definir una probabilidad a priori para el valor de cada parámetro. Dado que ambos valores están asociados a datos de un fenómeno continuo (mediciones físicas), serán modelados utilizando funciones Gaussianas.
+
+\subsubsection{Parámetro \emph{A}}
+A priori se decide que la distribución de $A$ es:
+
+\begin{myequation}
+P(A) = \frac{1}{\sqrt{2 \pi} \sigma_A} e^{\frac{(A - \bar A)^2}{2 \sigma_{A}^2}}
+\label{ec:distr_A}
+\end{myequation}
+
+Para determinar el valor de cada parámetro se debe tener en cuenta que A representa la amplitud en Flujo de la curva Gaussiana del modelo. Para determinarlos se presumirá que las mediciones no están muy alejadas de los valores medios esperados. Con todo esto, se decide lo siguiente:
+
+\begin{itemize}
+\item $\bar A$ será la amplitud máxima medida respecto al contínuo.
+
+\item $\sigma_A$ corresponderá al error de medición de Flujo. Este último se calculará usando el estimador de desviación estándar para los datos medidos sobre el continuo conocido.
+\end{itemize}
+
+\subsubsection{Parámetro \emph{b}}
+Análogamente, la distribución escogida para $b$ es:
+
+\begin{myequation}
+P(b) = \frac{1}{\sqrt{2 \pi} \sigma_b} e^{\frac{(b - \bar b)^2}{2 \sigma_{b}^2}}
+\end{myequation}
+
+\begin{itemize}
+\item $\bar b = 0.8493(\lambda_0 - \lambda(\frac{\bar A}{2}))$
+
+\item $\sigma_b = \frac{\Delta \lambda}{2}$ Se estima a partir de la resolución en longitud de onda (resolución horizontal) del modelo.
+\end{itemize}
+
+El valor de $\bar b$ se determina usando la aproximación \emph{Full Width at Half Maximum} (FWHM), donde $\lambda(\frac{\bar A}{2})$ es uno de los valores de longitud de onda en que la línea de absorción cae a la mitad en amplitud\footnote{ Se asume que la línea de absorción es aproximadamente simétrica.}.
+
 
 \subsection{Conclusiones}
 
-En esta ocasión la principal ventaja del método de Monte Carlo ha sido su fácil implementación. Bastó conocer las ecuaciones que acotaban el volumen de integración para poder realizar integración de funciones dentro de él, en este caso de densidad.
+Las regresiones muestran que para obtener datos de buena calidad es necesario tener muchas mediciones, o alternativamente, pocas mediciones de muy buena calidad. Se infiere de los resultados que los datos de las Supernovas son de mejor calidad que los de Cefeidas, ya que el valor de $H_0$ resultó mucho más cercano al aceptado y ambos disponían de una cantidad similar de datos. Esto último es razonable recordando que los datos de Supernovas se recolectaron casi cien años después, con todos los avances tecnológicos que ello conlleva.
 
-Como el algoritmo usado requiere una elevada cantidad de muestras para entregar resultados fiables (en este caso se usaron $10^6$ muestras), hay que tener especial cuidado en acotar lo máximo posible el volumen de pruebas o usar técnicas de optimización para limitar el tiempo de cómputo, que parece ser su principal limitante.
+En cuanto al método de Bootstrap, en ambas simulaciones indicó que los valores estimados a partir de mediciones reales quedan fuera del intervalo de confianza, implicando que son muy improbables. Para el caso de las Supernovas sabemos que el valor es correcto, por lo que se debe estudiar con detención donde está el problema. Bootstrap presume que no hay correlación entre la medición de un punto y el siguiente. Este enfoque funciona bien al tener una muestra de comportamiento poco correlacionado, como por ejemplo encuestas. En este problema, hay una evidente correlación entre distancia y velocidad. Como el método de Bootstrap no la considera, genera valores de comportamiento diferente a la muestra original, entregando intervalos de confianza anómalos.
 
-\section{Algoritmo de Metrópolis}
+\clearpage
+\section{Intervalos de confianza Ajuste Lineal}
 
 \subsection{Introducción}
 
-Se desea obtener una muestra aleatoria de números que posean la distribución de la ecuación (\ref{eq:distribucion_no_normalizada}). Se desconoce la constante de normalizaciónde la distribución por lo que se utiliza el algoritmo de metrópolis para obtener los datos.
+Se dispone de un set de datos obtenidos del catálogo de cuasares \emph{Data Release 9} del \emph{Sloan Digital Sky Survey (SDSS)}. El objetivo de esta Sección es encontrar la recta que mejor modela la relación entre el flujo de la banda i y la banza z, encontrando el intervalo de confianza al 95\% para sus parámetros. 
 
-\begin{equation}
-  W(x) = 3.5 \times \exp\left({\frac{-(x-3)^2}{3}}\right) + 2 \times \exp{\left(\frac{-(x+1.5)^2}{0.5}\right)}
-  \label{eq:distribucion_no_normalizada}
-\end{equation}
+Como el catálogo incluye valores del error para sus mediciones, se opta por utilizar una simulación de Monte Carlo con distribución de datos Gaussiana para encontrar el intervalo de confianza de los parámetros de la recta.
 
-\subsection{Implementación}
+\subsection{Desarrollo}
 
-Como el algoritmo de metrópolis requiere, para iniciar, de los parámetros posición inicial y tamaño máximo de paso, primero se grafica la distribución no normalizada para observar su forma, obteniéndose la Figura \ref{fig:distribucion_no_norm}.
+Primero se observa la distribución de los datos para ver si efectivamente tienen tendencia lineal. En la Figura \ref{fig:datos_originales} se presentan los datos originales del catálogo, graficados uno vs el otro.
 
-\begin{figure}
-  
+
+De la Figura se desprende que la mayoría de los datos están agrupados, con unos pocos datos lejos del grupo. Se podría implementar un filtro para eliminarlos del espacio muestral, pero como se desea estudiar el intervalo de confianza real se mantendrán durante el procesamiento.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[scale=0.5]{images/datos_fit.png}
+  \caption{Ajuste de los datos. Se ha realizado un zoom a la zona con mayor concentración de mediciones pero no se han eliminado datos del espacio muestral original.}
+  \label{fig:datos_fit}
 \end{figure}
 
+Los parámetros encontrados para el ajuste $ banda_z(x) = a \cdot banda_i + b$ son $a = 0.03 \cdot 10^{-6}[Jy]$ y $b=2.57$. La regresión lineal se realizó usando la herramienta \emph{polyfit} de \emph{numpy}. Los valores obtenidos usando el método de Monte Carlo se presentan en la Tabla \ref{tab:montecarlo}.
+
+\begin{table}[ht]
+  \centering
+  \begin{tabular}{|c|c|c|}
+    \hline
+    Variable & Min. Valor & Max. Valor \\
+    \hline
+    a [$10^{-6}Jy$] & 1.65 & 3.28\\
+    \hline
+    b & -0.005 & 0.067\\
+    \hline 
+  \end{tabular}
+  \caption{Intervalos de confianza al 95\% para parámetros del ajuste lineal. Estimados con simulación de Monte Carlo de $10^4$ espacios muestrales, usando distribución Gaussiana con error conocido para la generación de datos.}
+  \label{tab:montecarlo}
+\end{table}
+
+\section{Conclusiones}
+En esta ocasión la estimación de los intervalos de confianza resultó ser más razonable que en el caso de la Constante de Hubble. El motivo por el que ello ocurre es que el método de Montecarlo preserva gran parte de la correlación entre los datos, ya que las muestras son creadas generando variaciones en torno a los valores originales. Aún más, como las variaciones en este caso son Gaussianas, su media es cero por lo que para una gran cantidad de simulaciones se espera que su valor medio coindica con el ajuste lineal de las mediciones. Al comparar los parámetros con sus intervalos de confianza se observa que efectivamente ocurre éste fenómeno, cayendo cerca de su centro.
+
+Se puede observar el efecto de los datos alejados en el intervalo de confianza de $b$, el cual casi se duplica desde el mínimo al máximo valor. Esto sugiere que se puede utilizar el ancho del intervalo como un indicador de lo preciso que es un ajuste a un determinado set de datos, como alternativa o complemento de $\chi ^2$.
+
+\clearpage
+\section{Apéndice}
+
+\subsection{Regresión Lineal a través del Origen}
+\label{sec:regresion}
+
+Si el modelo es de la forma (\ref{eq:modelo_origen}), con $x$ e $y$ series de datos conocidos, se puede usar una regresión lineal a través del origen para estimar el valor del parámetro $b$.
+
+\begin{equation}
+ y = b\cdot x
+ \label{eq:modelo_origen}
+\end{equation}
+
+Para ello se busca el valor de $b$ que minimiza el error cuadrático medio $\chi^2$ (\ref{eq:chi2}).
+
+\begin{equation}
+  \chi^2(b) = \sum_{i=1}^{N} (y_i - b x_i) ^ 2
+  \label{eq:chi2}
+\end{equation}
+
+Minimización de $\chi^2$:
+
+\begin{equation}
+  0 = \dfrac{d \chi^2}{d b} = - 2 \sum_{i=1}^{N} (y_i - b x_i)x_i
+  \label{eq:minimizacion}
+\end{equation}
+
+Por comodidad se define:
+
+
+$$S_{xy} = \sum_{i=1}^{N} y_i x_i$$
+
+$$S_{xx} = \sum_{i=1}^{N} x_i ^ 2$$
+
+Así, (\ref{eq:minimizacion}) se reduce a:
+
+\begin{equation}
+  \hat{b} = \dfrac{S_{xy}}{S_{xx}}
+\end{equation} 
+
+Con $\hat{b}$ un estimador de $b$. Se debe mencionar que esta técnica puede poseer un error asociado mayor que una regresión lineal simple, pues elimina un grado de libertad en el ajuste. También existe debate sobre las situaciones en que se puede usar. Para más información se puede consultar el documento Regression through the Origin\footnote{Joseph G. Eisenhauer, \emph{Regression through the Origin}. Canisius College, Buffalo, USA.}, donde se presenta una discusión del método y sus características.
+
+\clearpage
+\subsection{Método de Bootstrap}
+\label{sec:bootstrap}
+
+Esta técnica se utiliza cuando la distribución de probababilidad de los datos es desconocida y la cantidad de datos no alcanza para hacer supuestos. Su ventaja es que permite ampliar el espacio muestral de un fenómeno a partir de pocas mediciones. Consiste en crear muchos sets de datos simulados a partir de un muestreo con reposición de los datos originales. Cada muestreo simulado debe tener la misma cantidad de datos que el set inicial. Luego se calculan los parámetros de interés con los datos simulados y se determina su intervalo de confianza.
+
+\subsubsection*{Ejemplo}
+Supongamos que se tiene el set [1 , 3 , 2], y el parámetro de interés es la media. Los siguientes serían datos simulados para este set:
+
+\begin{center}
+  [1, 1, 3]
+
+  [2, 2, 2]
+
+  [3, 2, 2]
+
+  [2, 1, 3]
+
+  [3, 2, 3]
+
+\end{center}
+  
+
+El set original tiene media 2, y los cinco sets simulados tienen medias 1.6, 2, 2.3, 2, 2.7. Un intervalo de confianza de $x\%$ es aquel en que caen el $x\%$ de las muestras. Así, la media en este ejemplo estaría entre 2 y 2.3 con un intervalo de confianza del 60\%.
 
 \end{document}
