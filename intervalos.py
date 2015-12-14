@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-scala = 10**16
+escala = 10**16
 
 marg = np.loadtxt('marginales.txt')
 emargins = np.loadtxt('esperanzas.txt')
@@ -13,18 +13,21 @@ y = [marg[:201], marg[201:402], marg[402:453],
               marg[453:504], marg[504:555], marg[555:606]]
 x = [dmarg[:201], dmarg[201:402], dmarg[402:453],
               dmarg[453:504], dmarg[504:555], dmarg[555:606]]
-cred_inter = []
+intervalo = []
 
 '''
 -----------------------------------------------------------------------------
-Calculo de intervalos de credibilidad
+Calculo de intervalos de credibilidad: Dado que primero se realizo el ploteo,
+nos aprovechamos de que las curvas son bastante simetricas para luego
+decir que podemos evaluar tanto en left como el right en la fila 42. Tambien
+nos aprovechamos de lo anterior para ir corriendo el left y el right al mismo
+tiempo en una unidad. No es lo optimo, pero es una buena aproximacion.
 -----------------------------------------------------------------------------
 '''
 # dado las diferencias de escala se calcularon a "mano" los quivalentes
 # a 68%.
 equivalente = [0.002296, 0.098, 0.0467, 0.10014, 0.0643, 0.214]
 for i in range(len(y)):
-    print i
     dx = x[i][1] - x[i][0]
     for n in range(len(x[i])):
         if x[i][n] >= emargins[i]:
@@ -33,7 +36,6 @@ for i in range(len(y)):
             print n
             break
     s = dx * y[i][n]
-    print s
     while s < equivalente[i]:
         left -=1
         right +=1
@@ -41,60 +43,88 @@ for i in range(len(y)):
         print s
     xl = x[i][left]
     xr = x[i][right]
-    cred_inter.append((xl, xr))
+    intervalo.append((xl, xr))
 
 
-cred_inter[0] = (cred_inter[0][0]/scala, cred_inter[0][1]/scala)
-cred_inter[2] = (cred_inter[2][0]/scala, cred_inter[2][1]/scala)
-cred_inter[4] = (cred_inter[4][0]/scala, cred_inter[4][1]/scala)
+intervalo[0] = (intervalo[0][0]/escala, intervalo[0][1]/escala)
+intervalo[2] = (intervalo[2][0]/escala, intervalo[2][1]/escala)
+intervalo[4] = (intervalo[4][0]/escala, intervalo[4][1]/escala)
 
-print 'Primer modelo: Gaussiana simple'
-print "Inter. de cred. A:", cred_inter[0], "[erg s^-1 Hz^-1 cm^-2]"
-print "Inter. de cred. sigma:", cred_inter[1], "[A]"
+print 'Intervalos primer modelo: Gaussiana simple'
+print "A:", intervalo[0], "[erg s^-1 Hz^-1 cm^-2]"
+print "sigma:", intervalo[1], "[A]"
 
-print 'Segundo modelo: Gaussiana doble'
-print "Inter. de cred. A1:", cred_inter[2], "[erg s^-1 Hz^-1 cm^-2]"
-print "Inter. de cred. sigma1:", cred_inter[3], "[A]"
-print "Inter. de cred. A2:", cred_inter[4], "[erg s^-1 Hz^-1 cm^-2]"
-print "Inter. de cred. sigma2:", cred_inter[5], "[A]"
+print 'Intervalos segundo modelo: Gaussiana doble'
+print "A1:", intervalo[2], "[erg s^-1 Hz^-1 cm^-2]"
+print "sigma1:", intervalo[3], "[A]"
+print "A2:", intervalo[4], "[erg s^-1 Hz^-1 cm^-2]"
+print "sigma2:", intervalo[5], "[A]"
 
 '''
 ----------------------------------------------------------------------------
 PLOTS
 ----------------------------------------------------------------------------
-
+'''
 plt.clf()
 plt.figure(1)
-plt.plot(x[0]/scala, y[0]*scala, color='b')
-plt.axvline(emargins[0]/scala, color='g')
+plt.plot(x[0]/escala, y[0]*escala, color='b')
+plt.axvline(emargins[0]/escala, color='g', label='Esperanza')
+plt.axvline(intervalo[0][0], color='r', label='Intervalo credibilidad')
+plt.axvline(intervalo[0][1], color='r')
+plt.title('Densidad de probabilidad $A$, modelo 1')
+plt.xlabel('Amplitud [$erg$ $s^{-1}$ $Hz^{-1}$ $cm^{-2}$]')
+plt.legend()
 plt.savefig('curva1.png')
 
 plt.figure(2)
 plt.plot(x[1], y[1], color='b')
-plt.axvline(emargins[1], color='g')
+plt.axvline(emargins[1], color='g', label='Esperanza')
+plt.axvline(intervalo[1][0], color='r', label='Intervalo credibilidad')
+plt.axvline(intervalo[1][1], color='r')
+plt.title('Densidad de probabilidad $\sigma$, modelo 2')
+plt.legend(loc=2)
+plt.xlabel('$\sigma$ [$\AA$]')
 plt.savefig('curva2.png')
 
 plt.figure(3)
-plt.plot(x[2]/scala, y[2]*scala, color='b')
-plt.axvline(emargins[2]/scala, color='g')
+plt.plot(x[2]/escala, y[2]*escala, color='b')
+plt.axvline(emargins[2]/escala, color='g', label='Esperanza')
+plt.axvline(intervalo[2][0], color='r', label='Intervalo credibilidad')
+plt.axvline(intervalo[2][1], color='r')
+plt.title('Densidad de probabilidad $A_1$, modelo 2')
+plt.xlabel('Amplitud [$erg$ $s^{-1}$ $Hz^{-1}$ $cm^{-2}$]')
+plt.legend()
 plt.savefig('curva3.png')
 
 plt.figure(4)
-plt.plot(x[3], y[3])
-plt.axvline(emargins[3], color='r')
+plt.plot(x[3], y[3], color='b')
+plt.axvline(emargins[3], color='g', label='Esperanza')
+plt.axvline(intervalo[3][0], color='r', label='Intervalo credibilidad')
+plt.axvline(intervalo[3][1], color='r')
+plt.title('Densidad de probabilidad $\sigma_1$, modelo 2')
+plt.legend()
+plt.xlabel('$\sigma$ [$\AA$]')
 plt.savefig('curva4.png')
 
 plt.figure(5)
-plt.plot(x[4]/scala, y[4]*scala)
-plt.axvline(emargins[4]/scala, color='r')
+plt.plot(x[4]/escala, y[4]*escala, color='b')
+plt.axvline(emargins[4]/escala, color='g', label='Esperanza')
+plt.axvline(intervalo[4][0], color='r', label='Intervalo credibilidad')
+plt.axvline(intervalo[4][1], color='r')
+plt.legend(loc=2)
+plt.title('Densidad de probabilidad $A_1$, modelo 2')
+plt.xlabel('Amplitud [$erg$ $s^{-1}$ $Hz^{-1}$ $cm^{-2}$]')
 plt.savefig('curva5.png')
 
 plt.figure(6)
-plt.plot(x[5], y[5])
-plt.axvline(emargins[5], color='r')
-plt.xlim(6, 11)
+plt.plot(x[5], y[5], color='b')
+plt.axvline(emargins[5], color='g', label='Esperanza')
+plt.axvline(intervalo[5][0], color='r', label='Intervalo credibilidad')
+plt.axvline(intervalo[5][1], color='r')
+plt.xlabel('$\sigma$ [$\AA$]')
+plt.legend()
+plt.title('Densidad de probabilidad $\sigma_2$, modelo 2')
 plt.savefig('curva6.png')
 
 plt.draw()
 plt.show()
-'''
