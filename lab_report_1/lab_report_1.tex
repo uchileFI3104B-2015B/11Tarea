@@ -127,7 +127,8 @@ Para todos los casos se utiliza la función de verosimilitud (\ref{ec:verosimili
   \label{ec:verosimilitud}
 \end{myequation}
 
-La probabilidad a priori de los parámetros de cada distribución dependerá de cada modelo y se detalla en las secciones \ref{sec:modelo1} y \ref{sec:modelo2}. Una vez calculados todos los valores, se procede a calcular la densidad de probabilidad $P(\Theta| \vec{x}, M)$ para una grilla con diversos valores de $\Theta$.
+La probabilidad a priori de los parámetros de cada distribución dependerá de cada modelo y se detalla en las secciones \ref{sec:modelo1} y \ref{sec:modelo2}.
+% FALTA PONER COMO SE ESTIMAN LOS MEJORES PARAMETROS
 
 %%%---------------------- PARAMETROS PARA CADA MODELO ---------------------------%%%
 \subsection{Parámetros modelo 1: Línea Gaussiana Simple}
@@ -165,7 +166,7 @@ P(b) = \frac{1}{\sqrt{2 \pi} \sigma_b} e^{\frac{-(b - \bar b)^2}{2 \sigma_{b}^2}
 \item $\sigma_b = \frac{\Delta \lambda}{2}$ Se estima a partir de la resolución en longitud de onda (resolución horizontal) del modelo.
 \end{itemize}
 
-El valor de $\bar b$ se determina usando la aproximación \emph{Full Width at Half Maximum} (FWHM), donde $\lambda(\frac{\bar A}{2})$ es uno de los valores de longitud de onda en que la línea de absorción cae a la mitad en amplitud\footnote{ Se asume que la línea de absorción es aproximadamente simétrica.}.
+El valor de $\bar b$ se determina usando la aproximación \emph{Full Width at Half Maximum} (FWHM), donde $\lambda(\frac{\bar A}{2})$ es uno de los valores de longitud de onda en que la línea de absorción cae a la mitad en amplitud\footnote{Se asume que la línea de absorción es aproximadamente simétrica.}.
 
 \subsection{Parámetros modelo 2: Línea Gaussiana Doble}
 \label{sec:modelo2}
@@ -185,5 +186,13 @@ Y para $b_1$, $b_2$:
   
   \item $\sigma_{b_1} = \sigma_{b_2} = \sigma_b$ El error proviene del mismo fenómeno (es igual).
 \end{itemize}
+
+\section{Implementación y Resultados}
+
+Para operar con los datos en un rango razonable, y evitar \emph{overflows} numéricos o divisiones por cero, se escalan los valores del espectro multiplicándolo por $2.5 \cdot 10^{18}$. Así, el vector de datos queda: $\vec{x} = (\vec{\lambda}, \vec{F^*})$, con $\vec{F^*} = 2.5 \cdot 10^{18} \vec{F}$. 
+
+\subsection{Modelo 1: Línea Gaussiana Simple}
+
+
 
 \end{document}

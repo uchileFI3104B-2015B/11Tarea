@@ -10,7 +10,7 @@ if __name__ == '__main__':
     wavelength = data[:,0]
     flux = data[:,1]
 
-    scale_fact = 2.45e18
+    scale_fact = 2.5e18
     flux = flux * scale_fact
     C_0 = 1e-16 * scale_fact  # Nivel del continuo
     lambda_0 = 6563
@@ -48,12 +48,8 @@ if __name__ == '__main__':
     modelo.normalizar(wavelength, flux)  # Permite usar prob a posteriori norm.
 
     p = modelo.prob_a_posteriori(wavelength, flux, mean_A, mean_b)
-    print(p)
+    print(modelo.K)
 
     ''' Graficar modelo1 vs long de onda '''
     x = np.linspace(min(wavelength), max(wavelength), 1000)
     y = modelo.model(x, mean_A, mean_b*1.2)
-
-    plt.plot(wavelength, flux, 'r')
-    plt.plot(x, y, 'b')
-    plt.show()
