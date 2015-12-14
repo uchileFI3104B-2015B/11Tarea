@@ -17,11 +17,12 @@ cred_inter = []
 
 '''
 -----------------------------------------------------------------------------
-Calculo de intervalos de credibilidad : Se tenia la idea de como efectuar
-este calculo, pero a falta de tiempo se decide utilizar algoritmo realizado
-por alumno Bruno Scheihing .
+Calculo de intervalos de credibilidad
 -----------------------------------------------------------------------------
 '''
+# dado las diferencias de escala se calcularon a "mano" los quivalentes
+# a 68%.
+equivalente = [0.002296, 0.098, 0.0467, 0.10014, 0.0643, 0.214]
 for i in range(len(y)):
     print i
     dx = x[i][1] - x[i][0]
@@ -29,31 +30,17 @@ for i in range(len(y)):
         if x[i][n] >= emargins[i]:
             left = n - 1
             right = n + 1
+            print n
             break
     s = dx * y[i][n]
-    while s < 0.0068:
-        if y[i][right] > y[i][left]:
-            s += dx * y[i][right]
-            right += 1
-        else:
-            s += dx * y[i][left]
-            left -= 1
-        if y[i][right] > y[i][left] and s < 0.0068:
-            xl = x[i][left]
-            while y[i][right] > y[i][left]:
-                s += dx * y[i][right]
-                right += 1
-            xr = (x[i][right-1] + (x[i][right]-x[i][right-1]) *
-                  (y[i][left]-y[i][right-1]) /
-                  (y[i][right]-y[i][right-1]))
-        elif s < 0.0068:
-            xr = x[i][right]
-            while y[i][left] >= y[i][right]:
-                s += dx * y[i][left]
-                left -= 1
-            xl = (x[i][left] + (x[i][left+1]-x[i][left]) *
-                  (y[i][right]-y[i][left]) /
-                  (y[i][left+1]-y[i][left]))
+    print s
+    while s < equivalente[i]:
+        left -=1
+        right +=1
+        s += dx * y[i][right]
+        print s
+    xl = x[i][left]
+    xr = x[i][right]
     cred_inter.append((xl, xr))
 
 
@@ -75,20 +62,21 @@ print "Inter. de cred. sigma2:", cred_inter[5], "[A]"
 ----------------------------------------------------------------------------
 PLOTS
 ----------------------------------------------------------------------------
-'''
+
+plt.clf()
 plt.figure(1)
-plt.plot(x[0]/scala, y[0])
-plt.axvline(emargins[0]/scala, color='r')
+plt.plot(x[0]/scala, y[0]*scala, color='b')
+plt.axvline(emargins[0]/scala, color='g')
 plt.savefig('curva1.png')
 
 plt.figure(2)
-plt.plot(x[1], y[1])
-plt.axvline(emargins[1], color='r')
+plt.plot(x[1], y[1], color='b')
+plt.axvline(emargins[1], color='g')
 plt.savefig('curva2.png')
 
 plt.figure(3)
-plt.plot(x[2]/scala, y[2]*scala)
-plt.axvline(emargins[2]/scala, color='r')
+plt.plot(x[2]/scala, y[2]*scala, color='b')
+plt.axvline(emargins[2]/scala, color='g')
 plt.savefig('curva3.png')
 
 plt.figure(4)
@@ -109,3 +97,4 @@ plt.savefig('curva6.png')
 
 plt.draw()
 plt.show()
+'''
