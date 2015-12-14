@@ -2,8 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 data = np.loadtxt("espectro.dat", dtype='float', skiprows=3)
-wavelength = data[:,0]
-flux = data[:,1]
+wavelength = data[:, 0]
+flux = data[:, 1]
 
 ''' Graficar datos originales '''
 plt.rc('text', usetex=True)
