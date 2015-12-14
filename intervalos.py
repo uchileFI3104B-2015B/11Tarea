@@ -1,3 +1,9 @@
+'''
+Este script calcula los intervalos de credibilidad al 68 porciento de los
+parametros calculados en el script tarea.py. Grafica la densidad de
+probabilidad de cada parametro, especificando el valor de su esperanza
+y los extremos de los intervalos.
+'''
 from __future__ import division
 import numpy as np
 import matplotlib.pyplot as plt
@@ -10,9 +16,9 @@ emargins = np.loadtxt('esperanzas.txt')
 dmarg = np.loadtxt('dmarginales.txt')
 
 y = [marg[:201], marg[201:402], marg[402:453],
-              marg[453:504], marg[504:555], marg[555:606]]
+     marg[453:504], marg[504:555], marg[555:606]]
 x = [dmarg[:201], dmarg[201:402], dmarg[402:453],
-              dmarg[453:504], dmarg[504:555], dmarg[555:606]]
+     dmarg[453:504], dmarg[504:555], dmarg[555:606]]
 intervalo = []
 
 '''
@@ -26,7 +32,7 @@ tiempo en una unidad. No es lo optimo, pero es una buena aproximacion.
 '''
 # dado las diferencias de escala se calcularon a "mano" los quivalentes
 # a 68%.
-equivalente = [0.002296, 0.098, 0.0467, 0.10014, 0.0643, 0.214]
+equivalente = [0.32927, 0.32045, 0.321593, 0.29688, 0.29544, 0.30221]
 for i in range(len(y)):
     dx = x[i][1] - x[i][0]
     for n in range(len(x[i])):
@@ -37,8 +43,8 @@ for i in range(len(y)):
             break
     s = dx * y[i][n]
     while s < equivalente[i]:
-        left -=1
-        right +=1
+        left -= 1
+        right += 1
         s += dx * y[i][right]
         print s
     xl = x[i][left]

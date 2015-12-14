@@ -1,10 +1,24 @@
+'''
+Este script calcula los parametros de dos modelos de una linea de absorcion,
+con los datos ubicados en el archivo espectro.dat, utilizando tecnicas
+bayesianas. Calcula tambien el factor bayesiano, el cual permite determinar
+que modelo es mejor. Se conoce la cte del nivel del continuo (10^-16
+[erg s^-1 Hz^-1 cm^-2]) y se sabe que la longitud de onda del centro de la
+linea es 6563 [\AA].
+Modelo 1: 1 Gaussiana (2 parametros libres)
+Modelo 2: Doble Gaussiana (4 parametros libres)
+'''
 from __future__ import division
 import numpy as np
 import matplotlib.pyplot as plt
 
 
+'''
+-----------------------------------------------------------------------------
+Funciones a utilizar (analogas al DEMO)
+-----------------------------------------------------------------------------
+'''
 
-# Funciones a utilizar (analogas al DEMO)
 
 def gauss(x, mu, sigma):
     return np.exp(-(x-mu)**2 / (2*sigma**2))/np.sqrt(2*np.pi*sigma**2)
@@ -35,8 +49,8 @@ def fill_prior_1(beta0_grid, beta1_grid, prior_params):
     ni, nj = beta0_grid.shape
     for i in range(ni):
         for j in range(nj):
-            output[i, j] = prior_1([beta0_grid[i,j], beta1_grid[i,j]],
-                                    prior_params)
+            output[i, j] = prior_1([beta0_grid[i, j], beta1_grid[i, j]],
+                                   prior_params)
     return output
 
 
@@ -49,10 +63,10 @@ def fill_prior_2(beta0_grid, beta1_grid, beta2_grid, beta3_grid, prior_params):
             for k in range(nk):
                 for l in range(nl):
                     output[i, j, k, l] = prior_2([beta0_grid[i, j, k, l],
-                                               beta1_grid[i, j, k, l],
-                                               beta2_grid[i, j, k, l],
-                                               beta3_grid[i, j, k, l]],
-                                               prior_params)
+                                                 beta1_grid[i, j, k, l],
+                                                 beta2_grid[i, j, k, l],
+                                                 beta3_grid[i, j, k, l]],
+                                                 prior_params)
     return output
 
 
@@ -89,7 +103,8 @@ def fill_likelihood_1(beta0_grid, beta1_grid, data):
     ni, nj = beta0_grid.shape
     for i in range(ni):
         for j in range(nj):
-            output[i, j] = likelihood_1([beta0_grid[i,j], beta1_grid[i,j]], data)
+            output[i, j] = likelihood_1([beta0_grid[i, j], beta1_grid[i, j]],
+                                        data)
     return output
 
 
@@ -125,20 +140,20 @@ ruido = np.sqrt(dif_cuadrado/n)
 '''
 -----------------------------------------------------------------------------
 Modelo 1:
+-----------------------------------------------------------------------------
 '''
 A1 = fnu.max() - fnu.min()
-sigma1 = 6  # Del grafico
-adivinanza1 = [A1, 1, sigma1, 3]
+adivinanza1 = [A1, 0.5, 4.0, 3]
 
 
 beta0_grid1, beta1_grid1 = np.mgrid[0.73:0.8:201j, 3.4:4:201j]
 prior_m1 = fill_prior_1(beta0_grid1, beta1_grid1, adivinanza1)
 likelihood_m1 = fill_likelihood_1(beta0_grid1, beta1_grid1,
-                                   [wavelength, fnu])
+                                  [wavelength, fnu])
 post_grid1 = likelihood_m1 * prior_m1
 
-dx1 = 10. / 200
-dy1 = 2. / 200
+dx1 = 0.07 / 200
+dy1 = 0.6 / 200
 P_E1 = np.sum(post_grid1) * dx1 * dy1
 marg_A1 = np.sum(post_grid1, axis=1) * dy1 / P_E1
 marg_sigma1 = np.sum(post_grid1, axis=0) * dx1 / P_E1
@@ -153,31 +168,32 @@ print ''
 '''
 -----------------------------------------------------------------------------
 Modelo 2:
+-----------------------------------------------------------------------------
 '''
 
-adivinanza2 =[9., 4., 2.5, 1., 10., 5., 8.5, 3.]
+adivinanza2 = [0.4, 1., 2.5, 1., 0.5, 0.2, 8.5, 3.]
 beta0_grid2, beta1_grid2, beta2_grid2, beta3_grid2 = np.mgrid[0.34:0.5:51j,
                                                               2:3:51j,
                                                               0.38:0.6:51j,
                                                               6:11:51j]
 prior_grid2 = fill_prior_2(beta0_grid2, beta1_grid2, beta2_grid2,
-                          beta3_grid2, adivinanza2)
+                           beta3_grid2, adivinanza2)
 likelihood_grid2 = fill_likelihood_2(beta0_grid2, beta1_grid2, beta2_grid2,
-                                    beta3_grid2, [wavelength, fnu])
+                                     beta3_grid2, [wavelength, fnu])
 post_grid2 = likelihood_grid2 * prior_grid2
-dx2 = 1.0 / 50
-dy2 = 3.0 / 50
-dj2 = 1.0 / 50
-dk2 = 6.0 / 50
+dx2 = 0.16 / 50
+dy2 = 1.0 / 50
+dj2 = 0.22 / 50
+dk2 = 5.0 / 50
 P_E2 = np.sum(post_grid2) * dx2 * dy2 * dj2 * dk2
 marg_A2_1 = (np.sum(np.sum(np.sum(post_grid2, axis=1), axis=1), axis=1) *
-              dy2 * dj2 * dk2 / P_E2)
+             dy2 * dj2 * dk2 / P_E2)
 marg_sigma2_1 = (np.sum(np.sum(np.sum(post_grid2, axis=0), axis=1), axis=1) *
-              dx2 * dj2 * dk2 / P_E2)
+                 dx2 * dj2 * dk2 / P_E2)
 marg_A2_2 = (np.sum(np.sum(np.sum(post_grid2, axis=0), axis=0), axis=1) *
-              dx2 * dy2 * dk2 / P_E2)
+             dx2 * dy2 * dk2 / P_E2)
 marg_sigma2_2 = (np.sum(np.sum(np.sum(post_grid2, axis=0), axis=0), axis=0) *
-              dx2 * dy2 * dj2 / P_E2)
+                 dx2 * dy2 * dj2 / P_E2)
 E_A2_1 = np.sum(beta0_grid2[:, 0, 0, 0] * marg_A2_1) * dx2
 E_sigma2_1 = np.sum(beta1_grid2[0, :, 0, 0] * marg_sigma2_1) * dy2
 E_A2_2 = np.sum(beta2_grid2[0, 0, :, 0] * marg_A2_2) * dj2
@@ -189,13 +205,14 @@ print ''
 print 'Amplitud 2               :', E_A2_2
 print 'sigma 2                  :', E_sigma2_2
 print ''
-print "Factor bayesiano:", P_E1/P_E2
+print "Factor bayesiano:", P_E1 / P_E2
 
 '''
 -----------------------------------------------------------------------------
 Guardando informacion para procesar en otro script:
+-----------------------------------------------------------------------------
 '''
-#len: 201, 201, 51, 51, 51, 51
+# len: 201, 201, 51, 51, 51, 51
 marginales = np.concatenate((marg_A1, marg_sigma1, marg_A2_1, marg_sigma2_1,
                              marg_A2_2, marg_sigma2_2), axis=0)
 esperanzas = [E_A1, E_sigma1, E_A2_1, E_sigma2_1, E_A2_2, E_sigma2_2]
