@@ -41,12 +41,12 @@ def llamar_archivo(nombre):
     return x, y
 
 
-def doblegauss(x, A, sigma1, B, sigma2):
+def doblegauss(x, A1, sigma1, A2, sigma2):
     '''
     Retorna el valor de la suma de dos gaussianas evaluadas en x.
     '''
-    g1 = (A * scipy.stats.norm(loc=6563, scale=sigma1).pdf(x))
-    g2 = (B * scipy.stats.norm(loc=6563, scale=sigma2).pdf(x))
+    g1 = (A1 * scipy.stats.norm(loc=6563, scale=sigma1).pdf(x))
+    g2 = (A2 * scipy.stats.norm(loc=6563, scale=sigma2).pdf(x))
     return 1e-16 - g1 - g2
 
 
@@ -178,7 +178,7 @@ def fill_likelihood(b_grid, x, y, error, dim):
                     for l in range(nl):
                         coord = [b0_grid[i, j], b1_grid[i, j],
                                  b2_grid[i, j], b3_grid[i, j]]
-                        output[i, j, k, l] = likelihood(coor, x, y, error, dim)
+                        output[i, j, k, l] = likelihood(coord, x, y, error, dim)
     return output
 
 
@@ -213,49 +213,64 @@ def desviacion(y, imin, imax):
     return np.std(z)
 
 
-def paso_metropolis(p0, d, x, y, error, params, dim):
+def calcular_parametros(x, y, dim):
     '''
-    Avanza un paso con el algoritmo de metropolis. Sus input son 'p0' las
-    semilas, 'd' la distancia a avanzar, 'x' e 'y' son los datos, 'error' es
-    el error std de los datos y, 'params' los parametros de las funciones
-    prior y 'dim' las dimensiones.
+    Calcula los parametros de los modelos gaussiano y doble gaussiano a
+    partir de los datos x, y. 200 es el numero de bins a discretizar los
+    intervalos en dimension 2, 50 es el numero de bins a discretizar los
+    intervalos en dimension 1. dim representa la dimension del problema.
     '''
-    x0, y0 = p0
-    rx = np.random.uniform(low=-1., high=1.)
-    ry = np.random.uniform(low=-1., high=1.)
-    xp = x0 + d * rx
-    yp = y0 + d * ry
-    pri = prior([x0, y0], params, dim)
-    lik = likelihood([x0, y0], x, y, error, dim)
-    posterior_p0 = pri * lik
-    prueba_pri = prior([xp, yp], params, dim)
-    prueba_lik = likelihood([xp, yp], x, y, error, dim)
-    posterior_prueba = prueba_pri * prueba_lik
-    if (posterior_prueba / posterior_p0) > np.random.uniform(0, 1):
-        p0 = [xp, yp]
-    return p0
-
-
-def generador(xn, N, d, x, y, error, params, dim):
-    '''
-    Generador de funcion distribucion.
-    - Input: (xn semilla, Numero de bins, distancia pasos).
-    - Output: Arreglo 'y' distribuido segun w, porcentaje de pasos aceptados.
-    '''
-    y = np.zeros(N)
-    # Guardar la primera semilla
-    y[0] = np.copy(xn)
-    # Contador de aceptados y rechazados respectivamente
-    j = 0.
-    k = 0.
-    for i in range(len(y)-1):
-        y[i+1] = paso_metropolis(p0, d, x, y, error, params, dim)
-        if y[i+1] == y[i]:
-            k += 1.
-        else:
-            j += 1.
-    porcentaje = 100. * j / (j + k)
-    return y, porcentaje
+    if dim == 2:
+        # Grillas
+        b_grid = np.mgrid[7e-17:8.2e-17:200j, 3.2:4.2:200j]
+        b0_grid, b1_grid = b_grid
+        dA = 1.2e-17 / 200
+        dsigma = 1. / 200
+        prior_params = [7.5e-17, 1e-17, 3.5, 1.]
+        prior_grid = fill_prior(b_grid, prior_params, dim)
+        likelihood_grid = fill_likelihood(b_grid, x, y, 1, dim)
+        post_grid = likelihood_grid * prior_grid
+        P = np.sum(post_grid) * dA * dsigma
+        # Parametros
+        Amp = np.sum(post_grid, axis=1) * dsigma / P
+        sigma = np.sum(post_grid, axis=0) * dA / P
+        # Esperanza
+        EAmp = np.sum(b0_grid[:, 0] * Amp) * dA
+        Esigma = np.sum(b1_grid[0, :] * sigma) * dsigma
+        return P, EAmp, Esigma
+    if dim == 4:
+        # Grillas
+        b_grid = np.mgrid[3.1e-17:5.1e-17:50j, 1.4:3.4:50j,
+                          3.8e-17:5.8e-17:50j, 7.4:9.4:50j]
+        b0_grid, b1_grid, b2_grid, b3_grid = b_grid
+        # Anchos de bins
+        dA1 = 2e-17 / 50
+        dA2 = 2e-17 / 50
+        dsigma1 = 1. / 50
+        dsigma2 = 1. / 50
+        # Prior params [parametro, sigmaparametro], [A1, sigma1, A2, sigma2]
+        prior_params = [4e-17, 1e-17, 2., 1., 4.5e-17, 1e-17, 8., 1.]
+        # Calcular verosimilitud y prior
+        prior_grid = fill_prior(b_grid, prior_params, dim)
+        likelihood_grid = fill_likelihood(b_grid, x, y, 1, dim)
+        post_grid = likelihood_grid * prior_grid
+        # Normalizacion
+        P = np.sum(post_grid) * dA1 * dsigma1 * dA2 * dsigma2 
+        # Parametros
+        D = dsigma1 * dA2 * dsigma2 / P
+        Amp1 = np.sum(np.sum(np.sum(post_grid, axis=1), axis=1), axis=1) * D
+        D = dA1 * dsigma1 * dsigma2 / P
+        Amp2 = np.sum(np.sum(np.sum(post_grid, axis=0), axis=0), axis=1) * D
+        D = dA1 * dA2 * dsigma2 / P
+        sigma1 = np.sum(np.sum(np.sum(post_grid, axis=0), axis=1), axis=1) * D
+        D = dA1 * dsigma1 * dA2 / P
+        sigma2 = np.sum(np.sum(np.sum(post_grid, axis=0), axis=0), axis=0) * D
+        # Esperanza
+        EAmp1 = np.sum(beta0_grid2[:, 0, 0, 0] * Amp1) * dA1
+        EAmp2 = np.sum(beta2_grid2[0, 0, :, 0] * Amp2) * dA2
+        Esigma1 = np.sum(beta1_grid2[0, :, 0, 0] * std1) * dsigma1
+        Esigma2 = np.sum(beta3_grid2[0, 0, 0, :] * std2) * dsigma2
+        return P, EAmp1, Esigma1, EAmp2, Esigma2
 
 
 def resultados_gauss(x, y, seeds=False):
@@ -265,38 +280,71 @@ def resultados_gauss(x, y, seeds=False):
     '''
     # Ajustar gaussiana
     popt1 = fitear_implementado(gauss, x, y, seed=[seeds[0], seeds[1]])
+    popt2 = calcular_parametros(x, y, 2)
+    # Ajustar doble gaussiana
+    popt3 = fitear_implementado(doblegauss, x, y, seed=seeds)
+    popt4 = calcular_parametros(x, y, 4)
     # Escribir resultados
     print '----------------------------------------------'
     print 'f(x) =  1e-16 - A * N(x, 6563, sigma1)'
+    print 'Metodo: curve_fit'
     print 'A = ', popt1[0]
     print 'sigma1 = ', popt1[1]
     print 'chi**2 = ', chi(gauss, x, y, popt1)
-    # Ajustar doble gaussiana
-    popt2 = fitear_implementado(doblegauss, x, y, seed=seeds)
+    print 'metodo: bayes'
+    print 'A = ', popt2[1]
+    print 'sigma1 = ', popt2[2]
+    print 'chi**2 = ', chi(gauss, x, y, [popt2[1], popt2[2]])
     # Escribir resultados
     print '----------------------------------------------'
     print 'f(x) =  1e-16 - A * N(x, 6563, sigma1) - B * N(x, 6563, sigma2)'
-    print 'A = ', popt2[0]
-    print 'B = ', popt2[2]
-    print 'sigma1 = ', popt2[1]
-    print 'sigma2 = ', popt2[3]
-    print 'chi**2 = ', chi(doblegauss, x, y, popt2)
+    print 'Metodo: curve_fit'
+    print 'A1 = ', popt3[0]
+    print 'A2 = ', popt3[2]
+    print 'sigma1 = ', popt3[1]
+    print 'sigma2 = ', popt3[3]
+    print 'chi**2 = ', chi(doblegauss, x, y, popt3)
+    print 'Metodo: bayes'
+    print 'A1 = ', popt4[1]
+    print 'A2 = ', popt4[3]
+    print 'sigma1 = ', popt4[2]
+    print 'sigma2 = ', popt4[4]
+    print 'chi**2 = ', chi(doblegauss, x, y, [popt4[1], popt4[2], popt4[3], popt4[4]])
     print '----------------------------------------------'
     # Generar datos para ploteo
     X = np.linspace(np.min(x), np.max(x), 10**5)
-    # Graficar doble gaussiana
+    # Graficar gaussiana
     p.plot(x, y, color='turquoise', drawstyle='steps-post', lw=2., alpha=0.8)
-    p.plot(X, doblegauss(X, *popt2), 'b', lw=2., alpha=0.8)
-    p.plot(X, gauss(X, popt2[0], popt2[1]), 'g--', lw=2., alpha=0.8)
-    p.plot(X, gauss(X, popt2[2], popt2[3]), 'g--', lw=2., alpha=0.8)
+    p.plot(X, gauss(X, popt1[0], popt1[1]), 'b', lw=2., alpha=0.8)
     p.axis([6503, 6623, 9e-17, 1.01e-16])
     p.xlabel('Angstrom')
     p.ylabel('erg / s / Hz / cm^2')
     p.grid(True)
     p.show()
-    # Graficar gaussiana
+    # Graficar doble gaussiana
+    p.plot(x, y, color='turquoise', drawstyle='steps-post', lw=2., alpha=0.8)
+    p.plot(X, doblegauss(X, *popt3), 'b', lw=2., alpha=0.8)
+    p.plot(X, gauss(X, popt3[0], popt3[1]), 'g--', lw=2., alpha=0.8)
+    p.plot(X, gauss(X, popt3[2], popt3[3]), 'g--', lw=2., alpha=0.8)
+    p.axis([6503, 6623, 9e-17, 1.01e-16])
+    p.xlabel('Angstrom')
+    p.ylabel('erg / s / Hz / cm^2')
+    p.grid(True)
+    p.show()
+    # Graficar comparacion gaussiana
     p.plot(x, y, color='turquoise', drawstyle='steps-post', lw=2., alpha=0.8)
     p.plot(X, gauss(X, popt1[0], popt1[1]), 'b', lw=2., alpha=0.8)
+    p.plot(X, gauss(X, popt2[1], popt2[2]), 'g', lw=2., alpha=0.8)
+    p.axis([6503, 6623, 9e-17, 1.01e-16])
+    p.xlabel('Angstrom')
+    p.ylabel('erg / s / Hz / cm^2')
+    p.grid(True)
+    p.show()
+    # Graficar comparacion doblegaussiana
+    p.plot(x, y, color='turquoise', drawstyle='steps-post', lw=2., alpha=0.8)
+    p.plot(X, doblegauss(X, *popt3), 'b', lw=2., alpha=0.8)
+    p.plot(X, doblegauss(X, popt4[1], popt4[2], popt4[3], popt4[4]), 'g',
+           lw=2., alpha=0.8)
     p.axis([6503, 6623, 9e-17, 1.01e-16])
     p.xlabel('Angstrom')
     p.ylabel('erg / s / Hz / cm^2')
@@ -322,25 +370,17 @@ p.show()
 seeds = [1e-17, 7., 1e-17, 7.]
 
 # Resultados
-resultados_gauss(x, y, seeds)
 error = desviacion(y, 50, 76)
 print 'Desviacion STD fuera de la linea de absorcion = ', error
+resultados_gauss(x, y, seeds)
+
 
 #############################################################################
 #                             DOS DIMENSIONES                               #
 #############################################################################
 
-b_grid = np.mgrid[4e-17:11e-17:50j, 1.:6.:50j]
-b0_grid, b1_grid = b_grid
-dA = 7e-17 / 50
-dsigma = 5. / 50
 
-prior_params = [7.6e-17, 1e-17, 3.7, 1.]
-prior_grid = fill_prior(b_grid, prior_params, 2)
-likelihood_grid = fill_likelihood(b_grid, x, y, 1, 2)
-post_grid = likelihood_grid * prior_grid
-P_E = np.sum(post_grid) * dA * dsigma
-
+'''
 with pm.Model() as basic_model:
     # Priors for unknown model parameters
     beta0 = pm.Normal('beta0', mu=7.6e-17, sd=1e-17)
@@ -363,7 +403,7 @@ p.plot(trace.beta0, trace.beta1, marker='None', ls='-', lw=0.3, color='w')
 p.show()
 
 
-
+'''
 
 '''
 p.pcolormesh(b0_grid * 10**17, b1_grid, prior_grid)
