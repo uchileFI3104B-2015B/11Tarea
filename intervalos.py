@@ -25,7 +25,7 @@ intervalo = []
 -----------------------------------------------------------------------------
 Calculo de intervalos de credibilidad: Dado que primero se realizo el ploteo,
 nos aprovechamos de que las curvas son bastante simetricas para luego
-decir que podemos evaluar tanto en left como el right en la fila 42. Tambien
+decir que podemos evaluar tanto en left como el right en la fila 48. Tambien
 nos aprovechamos de lo anterior para ir corriendo el left y el right al mismo
 tiempo en una unidad. No es lo optimo, pero es una buena aproximacion.
 -----------------------------------------------------------------------------
