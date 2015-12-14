@@ -8,8 +8,6 @@ from scipy.stats import distributions
 from scipy.stats import norm
 import pdb
 
-
-
 ''' Script que ajusta una gaussiana a el espectro observado usando métodos
 Bayesianos'''
 
@@ -35,7 +33,8 @@ def fill_prior(beta0_grid, beta1_grid, prior_params):
     ni, nj = beta0_grid.shape
     for i in range(ni):
         for j in range(nj):
-            output[i, j] = prior([beta0_grid[i,j], beta1_grid[i,j]], prior_params)
+            output[i, j] = prior([beta0_grid[i, j], beta1_grid[i, j]],
+                                 prior_params)
     return output
 
 
@@ -47,15 +46,18 @@ def likelihood(beta, data, f, sigma_datos):
     except:
         N = 1
     S = np.sum((y - f(x, beta0, beta1))**2)
-    L = (2 * np.pi * sigma_datos**2)**(-N / 2.) * np.exp(-S / 2 / sigma_datos**2)
+    L = ((2 * np.pi * sigma_datos**2)**(-N / 2.) *
+         np.exp(-S / 2 / sigma_datos**2))
     return L
+
 
 def fill_likelihood(beta0_grid, beta1_grid, data, f, sigma_datos):
     output = np.zeros(beta0_grid.shape)
     ni, nj = beta0_grid.shape
     for i in range(ni):
         for j in range(nj):
-            output[i, j] = likelihood([beta0_grid[i,j], beta1_grid[i,j]], data, f, sigma_datos)
+            output[i, j] = likelihood([beta0_grid[i, j],
+                                      beta1_grid[i, j]], data, f, sigma_datos)
 
     return output
 
@@ -66,9 +68,9 @@ def calcular_sigma_datos(wl, fnu):
     MU = 1 * 1e-16 * ESCALA
     i = 0
     sig = 0
-    while wl[i] < 6540 or wl[i]>6600:
+    while wl[i] < 6540 or wl[i] > 6600:
         sig += (fnu[i] - MU)**2
-        i +=1
+        i += 1
     return sig
 
 
@@ -86,7 +88,8 @@ def graficos(x, y, b0, b1, post):
     fig2, ax2 = plt.subplots()
     ax2.plot(b0[:, 0], marginal_b0)
     ax2.set_title("Distribucion para la amplitud")
-    ax2.set_xlabel("Amplitud $F_\\nu [erg s^{-1} Hz^{-1}cm^{-2}] \\times 1e17$")
+    ax2.set_xlabel('''Amplitud $F_\\nu [erg s^{-1}
+                   Hz^{-1}cm^{-2}] \\times 1e17$''')
     ax2.set_ylabel("Probabilidad")
     plt.savefig("Distribucion para la amplitud.jpg")
     marginal_b1 = np.sum(post, axis=0)
@@ -94,7 +97,8 @@ def graficos(x, y, b0, b1, post):
     fig3, ax3 = plt.subplots()
     ax3.plot(b1[0, :], marginal_b1)
     ax3.set_title("Distribucion para la varianza")
-    ax3.set_xlabel("varianza $F_\\nu [erg s^{-1} Hz^{-1}cm^{-2}] \\times 1e17$")
+    ax3.set_xlabel('''varianza $F_\\nu [erg s^{-1}
+                   Hz^{-1}cm^{-2}] \\times 1e17$''')
     ax3.set_ylabel("Probabilidad")
     plt.savefig("Distribucion para la varianza.jpg")
 
@@ -108,6 +112,7 @@ def graficos(x, y, b0, b1, post):
 
     return marginal_b0, marginal_b1
 
+
 def graficar_fit(x, y, A, sigma, f):
     '''grafica los datos y el fit correspondiente'''
     fig1, ax1 = plt.subplots()
@@ -119,7 +124,6 @@ def graficar_fit(x, y, A, sigma, f):
     ax1.set_xlim(x.min(), x.max())
     plt.legend(loc=4)
     plt.savefig("fit.jpg")
-
 
 
 def calcular_esperanza_param(b0, marginal_b0, b1,  marginal_b1):
@@ -144,12 +148,15 @@ beta0_grid, beta1_grid = np.mgrid[7:8.5:99j, 3.4:4:99j]
 beta_prior_pars = [1, 100, 5, 100]
 prior_grid = fill_prior(beta0_grid, beta1_grid, beta_prior_pars)
 
-likelihood_grid = fill_likelihood(beta0_grid, beta1_grid, [wl, fnu], gauss, sigma_datos)
+likelihood_grid = fill_likelihood(beta0_grid, beta1_grid,
+                                  [wl, fnu], gauss, sigma_datos)
 post_grid = likelihood_grid * prior_grid
 
 marginal_b0, marginal_b1 = graficos(wl, fnu, beta0_grid, beta1_grid, post_grid)
-A, sigma = calcular_esperanza_param(beta0_grid[:, 0], marginal_b0, beta1_grid[0], marginal_b1)
-print ("valores de esperanza para, amplitud = {}, varianza= {} ".format(A, sigma))
+A, sigma = calcular_esperanza_param(beta0_grid[:, 0],
+                                    marginal_b0, beta1_grid[0], marginal_b1)
+print ('''valores de esperanza para,
+       amplitud = {}, varianza= {} '''.format(A, sigma))
 graficar_fit(wl, fnu, A, sigma, gauss)
 plt.show()
 
@@ -161,8 +168,11 @@ likelihood_m1 = np.zeros((n0, n1))
 
 for i in range(n0):
     for j in range(n1):
-        prior_m1[i, j] = prior([beta0_grid[i, j], beta1_grid[i, j]], [1, 100, 5, 100])
-        likelihood_m1[i, j] = likelihood([beta0_grid[i, j], beta1_grid[i, j]], [wl, fnu], gauss, sigma_datos)
+        prior_m1[i, j] = prior([beta0_grid[i, j],
+                               beta1_grid[i, j]], [1, 100, 5, 100])
+        likelihood_m1[i, j] = likelihood([beta0_grid[i, j],
+                                         beta1_grid[i, j]], [wl, fnu],
+                                         gauss, sigma_datos)
 
 dx = 1.5 * 1e-16 * ESCALA / 100
 dy = 0.6 / 100
