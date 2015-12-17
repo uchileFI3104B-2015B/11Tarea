@@ -41,6 +41,14 @@ def llamar_archivo(nombre):
     return x, y
 
 
+def gauss(x, A, sigma):
+    '''
+    Retorna el valor de la suma de dos gaussianas evaluadas en x.
+    '''
+    g = (A * scipy.stats.norm(loc=6563, scale=sigma).pdf(x))
+    return 1e-16 - g
+
+
 def doblegauss(x, A1, sigma1, A2, sigma2):
     '''
     Retorna el valor de la suma de dos gaussianas evaluadas en x.
@@ -63,14 +71,6 @@ def Gauss2D(x, y, A, mu, sigma_pars):
     E = (y - mu_y)**2 / sigma_y**2
     F = 2. * rho * (x - mu_x) * (y - mu_y) / (sigma_x * sigma_y)
     return B * np.exp(C * (D + E - F))
-
-
-def gauss(x, A, sigma):
-    '''
-    Retorna el valor de la suma de dos gaussianas evaluadas en x.
-    '''
-    g = (A * scipy.stats.norm(loc=6563, scale=sigma).pdf(x))
-    return 1e-16 - g
 
 
 def prior(beta, params, dim):
@@ -176,8 +176,8 @@ def fill_likelihood(b_grid, x, y, error, dim):
             for j in range(nj):
                 for k in range(nk):
                     for l in range(nl):
-                        coord = [b0_grid[i, j], b1_grid[i, j],
-                                 b2_grid[i, j], b3_grid[i, j]]
+                        coord = [b0_grid[i, j, k, l], b1_grid[i, j, k, l],
+                                 b2_grid[i, j, k, l], b3_grid[i, j, k, l]]
                         output[i, j, k, l] = likelihood(coord, x, y, error, dim)
     return output
 
@@ -240,14 +240,14 @@ def calcular_parametros(x, y, dim):
         return P, EAmp, Esigma
     if dim == 4:
         # Grillas
-        b_grid = np.mgrid[3.1e-17:5.1e-17:50j, 1.4:3.4:50j,
-                          3.8e-17:5.8e-17:50j, 7.4:9.4:50j]
+        b_grid = np.mgrid[3.1e-17:5.1e-17:10j, 1.4:3.4:10j,
+                          3.8e-17:5.8e-17:10j, 7.4:9.4:10j]
         b0_grid, b1_grid, b2_grid, b3_grid = b_grid
         # Anchos de bins
-        dA1 = 2e-17 / 50
-        dA2 = 2e-17 / 50
-        dsigma1 = 1. / 50
-        dsigma2 = 1. / 50
+        dA1 = 2e-17 / 10
+        dA2 = 2e-17 / 10
+        dsigma1 = 1. / 10
+        dsigma2 = 1. / 10
         # Prior params [parametro, sigmaparametro], [A1, sigma1, A2, sigma2]
         prior_params = [4e-17, 1e-17, 2., 1., 4.5e-17, 1e-17, 8., 1.]
         # Calcular verosimilitud y prior
@@ -266,10 +266,10 @@ def calcular_parametros(x, y, dim):
         D = dA1 * dsigma1 * dA2 / P
         sigma2 = np.sum(np.sum(np.sum(post_grid, axis=0), axis=0), axis=0) * D
         # Esperanza
-        EAmp1 = np.sum(beta0_grid2[:, 0, 0, 0] * Amp1) * dA1
-        EAmp2 = np.sum(beta2_grid2[0, 0, :, 0] * Amp2) * dA2
-        Esigma1 = np.sum(beta1_grid2[0, :, 0, 0] * std1) * dsigma1
-        Esigma2 = np.sum(beta3_grid2[0, 0, 0, :] * std2) * dsigma2
+        EAmp1 = np.sum(b0_grid[:, 0, 0, 0] * Amp1) * dA1
+        EAmp2 = np.sum(b2_grid[0, 0, :, 0] * Amp2) * dA2
+        Esigma1 = np.sum(b1_grid[0, :, 0, 0] * sigma1) * dsigma1
+        Esigma2 = np.sum(b3_grid[0, 0, 0, :] * sigma2) * dsigma2
         return P, EAmp1, Esigma1, EAmp2, Esigma2
 
 
@@ -360,10 +360,12 @@ def resultados_gauss(x, y, seeds=False):
 x, y = llamar_archivo('espectro.dat')
 
 # Puntos escogidos como inicio de la linea de absorcion
+p.plot(x, y, color='turquoise', drawstyle='steps-post', lw=2., alpha=0.8)
 p.plot(x[50], y[50], '*')
 p.plot(x[76], y[76], '*')
-p.plot(x, y, color='turquoise', drawstyle='steps-post', lw=2., alpha=0.8)
 p.axis([6503, 6623, 9e-17, 1.01e-16])
+p.xlabel('Angstrom')
+p.ylabel('erg / s / Hz / cm^2')
 p.show()
 
 # Semillas para el ajuste
